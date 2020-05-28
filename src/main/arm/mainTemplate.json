@@ -235,12 +235,106 @@
          "metadata": {
             "description": "Username for your Weblogic domain name"
          }
+      },
+      "enableAdministrationPort":{
+         "defaultValue":true,
+         "type": "bool",
+         "metadata": {
+            "description": "Boolean value indicating, if Weblogic Administration Port is enabled or not"
+         }
+      },
+      "wlsAdministrationPort":{
+        "type": "int",
+        "defaultValue" : 9002,
+        "metadata": {
+            "description": "Weblogic Administration Port"
+        }
+      },
+      "enableCustomSSL":{
+         "defaultValue":false,
+         "type": "bool",
+         "metadata": {
+            "description": "Boolean value indicating, if custom SSL is enabled or not"
+         }
+      },
+      "wlsSSLCertificateDataResourceGroup":{
+        "type": "string",
+        "metadata": {
+            "description": "Resource Group containing Weblogic SSL Certificates"
+        }
+      },
+      "wlsSSLCertificateDataKeyVaultName":{
+        "type": "string",
+        "metadata": {
+            "description": "Keyvault name containing Weblogic SSL Certificates"
+        }
+      },
+      "wlsSSLCustomIdentityKeyStoreDataSecretName":{
+        "type": "string",
+        "metadata": {
+            "description": "Secret name in KeyVault containing Weblogic Custom Identity Keystore Data"
+        },
+        "defaultValue": "CustomIdentityKeyStoreDataSecret"
+      },
+      "wlsSSLCustomIdentityKeyStorePassPhraseSecretName":{
+        "type": "string",
+        "metadata": {
+            "description": "Secret name in KeyVault containing Weblogic Custom Identity Keystore Passphrase"
+        },
+        "defaultValue": "CustomIdentityKeyStorePassPhraseSecret"
+      },
+      "wlsSSLCustomIdentityKeyStoreType":{
+        "type": "string",
+        "metadata": {
+            "description": "Weblogic Custom Identity Keystore Type"
+        },
+        "defaultValue": "JKS"
+      },
+      "wlsSSLCustomTrustStoreDataSecretName":{
+        "type": "string",
+        "metadata": {
+            "description": "Secret name in KeyVault containing Weblogic Custom Trust Store Data"
+        },
+        "defaultValue": "CustomTrustStoreDataSecret"
+      },
+      "wlsSSLCustomTrustStorePassPhraseSecretName":{
+        "type": "string",
+        "metadata": {
+            "description": "Secret name in KeyVault containing Weblogic Custom Trust Store Passphrase"
+        },
+        "defaultValue": "CustomTrustStorePassPhraseSecret"
+      },
+      "wlsSSLCustomTrustStoreType":{
+        "type": "string",
+        "metadata": {
+            "description": "Weblogic Custom Trust Store Type"
+        },
+        "defaultValue": "JKS"
+      },
+      "wlsSSLServerPrivateKeyAliasSecretName":{
+        "type": "string",
+        "metadata": {
+            "description": "Secret name in KeyVault containing Weblogic Server Private  Key Alias"
+        },
+        "defaultValue": "ServerPrivateKeyAlias"
+      },
+      "wlsSSLServerPrivateKeyPassPhraseSecretName":{
+        "type": "string",
+        "metadata": {
+            "description": "Secret name in KeyVault containing Weblogic Server Private  KeyPassPhrase"
+        },
+        "defaultValue": "ServerPrivateKeyPassPhraseSecret"
       }
    },
    "variables": {
+      "const_currentSubscription": "[subscription().subscriptionId]",
       "name_aadLinkedTemplateName": "aadNestedTemplate.json",
       "name_adminLinkedTemplateName": "adminTemplate.json",
-      "name_dbLinkedTemplate": "dbTemplate.json"
+      "name_adminCustomSSLLinkedTemplateName": "adminTemplateForCustomSSL.json",
+      "name_dbLinkedTemplate": "dbTemplate.json",
+      "adminLinkedTemplateRef": "[concat('admin',if(parameters('enableCustomSSL'),'CustomSSL',''),'LinkedTemplate')]",
+      "name_adminLinkedTemplate": "adminLinkedTemplate",
+      "name_adminCustomSSLLinkedTemplate": "adminCustomSSLLinkedTemplate"
    },
    "resources": [
       {
@@ -261,6 +355,11 @@
          "name": "adminLinkedTemplate",
          "type": "Microsoft.Resources/deployments",
          "apiVersion": "2019-10-01",
+         "condition": "[not(parameters('enableCustomSSL'))]",
+         "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'admin.start')]"
+
+         ],
          "properties": {
             "mode": "Incremental",
             "templateLink": {
@@ -315,6 +414,142 @@
                },
                "wlsUserName": {
                   "value": "[parameters('wlsUserName')]"
+               },
+               "enableAdministrationPort":{
+                  "value": "[parameters('enableAdministrationPort')]"
+               },
+               "wlsAdministrationPort":{
+                  "value": "[parameters('wlsAdministrationPort')]"
+               }
+            }
+         }
+      },
+      {
+         "name": "adminCustomSSLLinkedTemplate",
+         "type": "Microsoft.Resources/deployments",
+         "apiVersion": "2019-10-01",
+         "condition": "[parameters('enableCustomSSL')]",
+         "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'admin.start')]"
+
+         ],
+         "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_adminCustomSSLLinkedTemplateName')))]",
+               "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+               "_artifactsLocation": {
+                  "value": "[parameters('_artifactsLocation')]"
+               },
+               "_artifactsLocationSasToken": {
+                  "value": "[parameters('_artifactsLocationSasToken')]"
+               },
+               "adminPasswordOrKey": {
+                  "value": "[parameters('adminPasswordOrKey')]"
+               },
+               "adminUsername": {
+                  "value": "[parameters('adminUsername')]"
+               },
+               "adminVMName": {
+                  "value": "[parameters('adminVMName')]"
+               },
+               "authenticationType": {
+                  "value": "[parameters('authenticationType')]"
+               },
+               "dnsLabelPrefix": {
+                  "value": "[parameters('dnsLabelPrefix')]"
+               },
+               "linuxImageOfferSKU": {
+                  "value": "[parameters('linuxImageOfferSKU')]"
+               },
+               "linuxImageVersion":{
+                  "value": "[parameters('linuxImageVersion')]"
+               },
+               "location": {
+                  "value": "[parameters('location')]"
+               },
+               "portsToExpose": {
+                  "value": "[parameters('portsToExpose')]"
+               },
+               "usePreviewImage":{
+                  "value": "[parameters('usePreviewImage')]"
+               },
+               "vmSizeSelect": {
+                  "value": "[parameters('vmSizeSelect')]"
+               },
+               "wlsDomainName": {
+                  "value": "[parameters('wlsDomainName')]"
+               },
+               "wlsPassword": {
+                  "value": "[parameters('wlsPassword')]"
+               },
+               "wlsUserName": {
+                  "value": "[parameters('wlsUserName')]"
+               },
+               "enableAdministrationPort":{
+                  "value": "[parameters('enableAdministrationPort')]"
+               },
+               "wlsAdministrationPort":{
+                  "value": "[parameters('wlsAdministrationPort')]"
+               },
+               "enableCustomSSL":{
+                  "value": "[parameters('enableCustomSSL')]"
+               },
+               "wlsSSLCustomIdentityKeyStoreData": {
+                   "reference": {
+                        "keyVault": {
+                            "id": "[resourceId(variables('const_currentSubscription'),  parameters('wlsSSLCertificateDataResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('wlsSSLCertificateDataKeyVaultName'))]"
+                        },
+                        "secretName": "[parameters('wlsSSLCustomIdentityKeyStoreDataSecretName')]"
+                   }
+               },
+               "wlsSSLCustomIdentityKeyStorePassPhrase": {
+                   "reference": {
+                        "keyVault": {
+                            "id": "[resourceId(variables('const_currentSubscription'),  parameters('wlsSSLCertificateDataResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('wlsSSLCertificateDataKeyVaultName'))]"
+                        },
+                        "secretName": "[parameters('wlsSSLCustomIdentityKeyStorePassPhraseSecretName')]"
+                   }
+               },
+               "wlsSSLCustomIdentityKeyStoreType":{
+                   "value": "[parameters('wlsSSLCustomIdentityKeyStoreType')]"
+               },
+               "wlsSSLCustomTrustStoreData": {
+                   "reference": {
+                        "keyVault": {
+                            "id": "[resourceId(variables('const_currentSubscription'),  parameters('wlsSSLCertificateDataResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('wlsSSLCertificateDataKeyVaultName'))]"
+                        },
+                        "secretName": "[parameters('wlsSSLCustomTrustStoreDataSecretName')]"
+                   }
+               },
+               "wlsSSLCustomTrustStorePassPhrase": {
+                   "reference": {
+                        "keyVault": {
+                            "id": "[resourceId(variables('const_currentSubscription'),  parameters('wlsSSLCertificateDataResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('wlsSSLCertificateDataKeyVaultName'))]"
+                        },
+                        "secretName": "[parameters('wlsSSLCustomTrustStorePassPhraseSecretName')]"
+                   }
+               },
+               "wlsSSLCustomTrustStoreType":{
+                   "value": "[parameters('wlsSSLCustomTrustStoreType')]"
+               },
+               "wlsSSLServerPrivateKeyAlias":{
+                   "reference": {
+                        "keyVault": {
+                            "id": "[resourceId(variables('const_currentSubscription'),  parameters('wlsSSLCertificateDataResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('wlsSSLCertificateDataKeyVaultName'))]"
+                        },
+                        "secretName": "[parameters('wlsSSLServerPrivateKeyAliasSecretName')]"
+                   }
+               },
+               "wlsSSLServerPrivateKeyPassPhrase": {
+                   "reference": {
+                        "keyVault": {
+                            "id": "[resourceId(variables('const_currentSubscription'),  parameters('wlsSSLCertificateDataResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('wlsSSLCertificateDataKeyVaultName'))]"
+                        },
+                        "secretName": "[parameters('wlsSSLServerPrivateKeyPassPhraseSecretName')]"
+                   }
                }
             }
          }
@@ -323,7 +558,7 @@
          "name": "dbLinkedTemplate",
          "type": "Microsoft.Resources/deployments",
          "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'adminLinkedTemplate')]"
+            "[resourceId('Microsoft.Resources/deployments', variables('adminLinkedTemplateRef'))]"
          ],
          "apiVersion": "2019-10-01",
          "condition": "[parameters('enableDB')]",
@@ -367,7 +602,6 @@
                "wlsUserName": {
                   "value": "[parameters('wlsUserName')]"
                }
-
             }
          }
       },
@@ -445,7 +679,7 @@
          "name": "${admin.end}",
          "type": "Microsoft.Resources/deployments",
          "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'adminLinkedTemplate')]",
+            "[resourceId('Microsoft.Resources/deployments', variables('adminLinkedTemplateRef'))]",
             "[resourceId('Microsoft.Resources/deployments', 'dbLinkedTemplate')]",
             "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]"
          ],
@@ -463,23 +697,23 @@
    "outputs": {
       "hostname": {
          "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.hostname.value]"
+         "value": "[reference(variables('adminLinkedTemplateRef'),'2019-10-01').outputs.hostname.value]"
       },
       "sshCommand": {
          "type": "string",
-         "value": "[concat('ssh ', parameters('adminUsername'), '@', reference('adminLinkedTemplate','2019-10-01').outputs.hostname.value)]"
+         "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('adminLinkedTemplateRef'),'2019-10-01').outputs.hostname.value)]"
       },
       "wlsDomainLocation": {
          "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.wlsDomainLocation.value]"
+         "value": "[reference(variables('adminLinkedTemplateRef'),'2019-10-01').outputs.wlsDomainLocation.value]"
       },
       "adminConsoleURL": {
          "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.adminConsoleURL.value]"
+         "value": "[reference(variables('adminLinkedTemplateRef'),'2019-10-01').outputs.adminConsoleURL.value]"
       },
       "adminConsoleSecureURL": {
          "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.adminConsoleSecureURL.value]"
+         "value": "[reference(variables('adminLinkedTemplateRef'),'2019-10-01').outputs.adminConsoleSecureURL.value]"
       }
    }
 }
