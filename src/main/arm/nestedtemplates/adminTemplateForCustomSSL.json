@@ -240,7 +240,7 @@
    "resources": [
       {
          "apiVersion": "2019-10-01",
-         "name": "${admin.admin.start}",
+         "name": "admin.admin.start",
          "type": "Microsoft.Resources/deployments",
          "properties": {
             "mode": "Incremental",
@@ -295,7 +295,7 @@
          "properties": {
             "publicIPAllocationMethod": "[variables('const_publicIPAddressType')]",
             "dnsSettings": {
-               "domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),'-',take(replace(parameters('guidValue'), '-', ''), 10),'-',toLower(parameters('wlsDomainName')))]"
+               "domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),'-',toLower(parameters('wlsDomainName')))]"
             }
          }
       },
