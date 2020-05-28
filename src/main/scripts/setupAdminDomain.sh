@@ -362,14 +362,13 @@ function updateNetworkRules()
 function storeCustomSSLCerts()
 {
 
-    KEYSTORE_PATH="/u01/keystores"
-    sudo mkdir -p $KEYSTORE_PATH
-    sudo rm -rf $KEYSTORE_PATH/*
-
-    sudo chown -R $username:$groupname $KEYSTORE_PATH
-
     if [ "${isCustomSSLEnabled,,}" == "true" ];
     then
+
+        KEYSTORE_PATH="/u01/keystores"
+        sudo mkdir -p $KEYSTORE_PATH
+        sudo rm -rf $KEYSTORE_PATH/*
+        
         echo "Custom SSL is enabled. Storing CertInfo as files..."
         export customIdentityKeyStoreFileName="$KEYSTORE_PATH/identity.jks"
         export customTrustKeyStoreFileName="$KEYSTORE_PATH/trust.jks"
@@ -389,6 +388,8 @@ function storeCustomSSLCerts()
         echo "$customIdentityKeyStoreData" | base64 --decode > $customIdentityKeyStoreFileName
         echo "$customTrustKeyStoreData" | base64 --decode > $customTrustKeyStoreFileName
 
+        sudo chown -R $username:$groupname $KEYSTORE_PATH
+    
     else
         echo "Custom SSL is not enabled"
     fi
@@ -450,6 +451,7 @@ export username="oracle"
 export groupname="oracle"
 
 export SCRIPT_PWD=`pwd`
+
 storeCustomSSLCerts
 
 create_adminDomain
