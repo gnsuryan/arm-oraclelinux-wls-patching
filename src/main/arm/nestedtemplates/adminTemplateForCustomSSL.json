@@ -438,7 +438,7 @@
       },
       {
          "apiVersion": "2019-10-01",
-         "name": "${admin.admin.end}",
+         "name": "admin.admin.end",
          "type": "Microsoft.Resources/deployments",
          "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"
