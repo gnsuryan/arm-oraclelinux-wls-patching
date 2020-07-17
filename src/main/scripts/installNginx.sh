@@ -29,6 +29,8 @@ sudo firewall-cmd --permanent --zone=public --add-service=http
 sudo firewall-cmd --permanent --zone=public --add-service=https
 sudo firewall-cmd --reload
 
+curl -L -s http://localhost/
+
 retCode=$(curl -L -s -o /dev/null -w "%{http_code}" http://localhost/)
 
 if [ "$retCode" == "200" ];
