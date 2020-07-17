@@ -67,7 +67,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                       "skipDos2Unix":false,
-                      "timestamp":123456789,      
+                      "timestamp":123456790,      
                       "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installNginx.sh"],
                       "commandToExecute": "sh installNginx.sh"
                 }
