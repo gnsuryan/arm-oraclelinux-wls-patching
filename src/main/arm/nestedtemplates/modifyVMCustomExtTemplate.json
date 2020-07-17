@@ -63,13 +63,15 @@
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
-                "typeHandlerVersion": "2.0",
+                "typeHandlerVersion": "2.1,
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                    "fileUris": [
-                        "https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installNginx.sh"
-                    ],
-                    "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','testParam')]"
+                    "settings": {
+                      "skipDos2Unix":false,
+                      "timestamp":123456789          
+                    },
+                    "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installNginx.sh"],
+                    "commandToExecute": "sh installNginx.sh"
                 }
             }
         }
