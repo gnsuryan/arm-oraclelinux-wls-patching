@@ -38,7 +38,7 @@
         }
     },
     "variables": {
-        "name_scriptFile": "installNgnix.sh",
+        "name_scriptFile": "installNgnix.sh"
     },
     "resources": [
         {
