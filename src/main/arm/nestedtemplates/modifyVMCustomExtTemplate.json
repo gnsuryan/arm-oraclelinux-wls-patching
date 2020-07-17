@@ -67,9 +67,9 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[uri(parameters('_artifactsLocationModifyVMCustomExtTemplate'), concat('../scripts/', variables('name_scriptFile')))]"
+                        "https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installNginx.sh"
                     ],
-                    "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),'testParam')]"
+                    "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','testParam')]"
                 }
             }
         }
