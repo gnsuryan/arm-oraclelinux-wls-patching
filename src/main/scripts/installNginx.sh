@@ -1,6 +1,6 @@
 #!/bin/bash
 
-nginix -v
+nginx -v
 
 if [ $? == 0 ];
 then
