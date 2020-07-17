@@ -57,7 +57,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
+            "name": "[concat(parameters('adminVMName'),'/modifyVMScript')]",
             "apiVersion": "2019-07-01",
             "location": "[parameters('location')]",
             "properties": {
