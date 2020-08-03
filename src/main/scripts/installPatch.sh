@@ -34,6 +34,7 @@ function check_opatch()
 function install_patch()
 {
     echo "Applying Patch..."
+    unzip -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_ZIP_FILE}
     cd ${PATCH_HOME_DIR}/${PATCH_NUMBER}
     opatch napply -silent -jdk $JAVA_HOME
 }
