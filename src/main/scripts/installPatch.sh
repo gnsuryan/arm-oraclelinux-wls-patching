@@ -3,11 +3,10 @@
 function download_patch_file()
 {
     
-    mkdir -p ${PATCH_HOME_DIR}/${PATCH_NUMBER}
-    cd ${PATCH_HOME_DIR}/${PATCH_NUMBER}
+    mkdir -p ${PATCH_HOME_DIR}
+    cd ${PATCH_HOME_DIR}
     rm -rf *.zip
-
-    wget -p ${PATCH_HOME_DIR}/${PATCH_NUMBER} https://github.com/gnsuryan/arm-oraclelinux-wls-admin-test/raw/master/src/main/p31471178_122130_Generic.zip
+    wget https://github.com/gnsuryan/arm-oraclelinux-wls-admin-test/raw/master/src/main/p31471178_122130_Generic.zip
 }
 
 function set_wls_classpath()
