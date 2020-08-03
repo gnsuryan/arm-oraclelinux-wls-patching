@@ -76,15 +76,15 @@ then
   exit 1
 fi
 
+PATCH_ZIP_FILE="$1"
+PATCH_NUMBER="$2"
+
 if [ -z $PATCH_ZIP_FILE ] || [ -z $PATCH_NUMBER ];
 then
   echo "Missing arguments: Usage: applyWLSPatch.sh <PATCH_ZIP_FILE>"
   exit 1
 fi
 ################### VALIDATIONS #####################
-
-PATCH_ZIP_FILE="$1"
-PATCH_NUMBER="$2"
 
 WLS_HOME="/u01/app/wls/install/oracle/middleware/oracle_home/wlserver"
 
