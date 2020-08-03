@@ -17,13 +17,18 @@ function set_wls_classpath()
      echo $CLASSPATH
      
      echo $JAVA_HOME
-     
-     export PATH=${WLS_MW_HOME}/OPatch:$JAVA_HOME/bin:$PATH
+     export PATH=${WL_HOME}/../OPatch:$JAVA_HOME/bin:$PATH
 }
 
 function check_opatch()
 {
    opatch lsinventory -jdk $JAVA_HOME
+   
+   if [ $? == 1 ];
+   then
+       echo "Unable to run opatch command."
+       exit 1
+   fi
 }
 
 function install_patch()
@@ -63,26 +68,27 @@ function verify_patch()
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_HOME_DIR="/u01/app/wls/patches"
 
-PATCH_ZIP_FILE=$1
-
 ################### VALIDATIONS #####################
-
-if test $# -ne 1
+if test $# -ne 2
 then
   echo "Missing or Wrong Arguments "
-  echo "Usage: applyWLSPatch.sh <PATCH_ZIP_FILE>"
+  echo "Usage: applyWLSPatch.sh <PATCH_ZIP_FILE> <PATCH_NUMBER>"
   exit 1
 fi
 
-if [ -z $PATCH_ZIP_FILE ];
+if [ -z $PATCH_ZIP_FILE ] || [ -z $PATCH_NUMBER ];
 then
   echo "Missing arguments: Usage: applyWLSPatch.sh <PATCH_ZIP_FILE>"
   exit 1
 fi
-
 ################### VALIDATIONS #####################
 
-WL_HOME="/u01/app/wls/install/oracle/middleware/oracle_home/wlserver"
+PATCH_ZIP_FILE="$1"
+PATCH_NUMBER="$2"
+
+WLS_HOME="/u01/app/wls/install/oracle/middleware/oracle_home/wlserver"
+
+download_patch_file
 
 set_wls_classpath
 
