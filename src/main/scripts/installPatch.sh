@@ -3,10 +3,11 @@
 function download_patch_file()
 {
     
-    cd ${PATCH_HOME_DIR}
+    mkdir -p ${PATCH_HOME_DIR}/${PATCH_NUMBER}
+    cd ${PATCH_HOME_DIR}/${PATCH_NUMBER}
     rm -rf *.zip
 
-    wget -p ${PATCH_HOME_DIR} https://github.com/gnsuryan/arm-oraclelinux-wls-admin-test/raw/master/src/main/p31471178_122130_Generic.zip
+    wget -p ${PATCH_HOME_DIR}/${PATCH_NUMBER} https://github.com/gnsuryan/arm-oraclelinux-wls-admin-test/raw/master/src/main/p31471178_122130_Generic.zip
 }
 
 function set_wls_classpath()
@@ -33,12 +34,6 @@ function check_opatch()
 
 function install_patch()
 {
-
-    echo "Creating directory required for applying patch"
-    mkdir -p ${PATCH_HOME_DIR}/${PATCH_NUMBER}
-    rm -rf ${PATCH_HOME_DIR}/${PATCH_NUMBER}/*
-    unzip -d ${PATCH_HOME_DIR}/${PATCH_NUMBER} ${PATCH_HOME_DIR}/${PATCH_ZIP_FILE}
-
     echo "Applying Patch..."
     cd ${PATCH_HOME_DIR}/${PATCH_NUMBER}
     opatch napply -silent -jdk $JAVA_HOME
