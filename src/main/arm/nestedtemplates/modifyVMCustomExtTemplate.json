@@ -62,7 +62,7 @@
     "resources": [
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('VMName'),'/modifyVMScript')]",
+            "name": "[concat(parameters('VMName'),'/newuserscript')]",
             "apiVersion": "2019-07-01",
             "location": "[parameters('location')]",
             "properties": {
