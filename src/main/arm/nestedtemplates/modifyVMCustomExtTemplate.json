@@ -50,7 +50,7 @@
         },
         "wls_patch_timestamp": {
             "type": "string",
-            "defaultValue": "[utcNow()]",
+            "defaultValue": "[formatDateTime(utcNow(),'yyyyMMddHHmmss')]",
             "metadata": {
                 "description": "Timestamp required for uniquely identifying and executing custom extension script for WebLogic Patching"
             }
