@@ -1,50 +1,128 @@
 #!/bin/bash
 
-function download_patch_file()
+function usage()
+{
+cat << USAGE >&2
+Usage:
+    -patchFile          PATCH_FILE      WebLogic Patch File
+    -patchNumber        PATCH_NUMBER    WebLogic Patch Number
+    -h|?|--help         HELP            Help/Usage info
+USAGE
+
+exit 1
+}
+
+function get_param()
+{
+    while [ "$1" ]
+    do
+        case "$1" in    
+         -h |?|--help )        usage ;;
+         -patchFile   )        PATCH_FILE=$2 ;;
+         -patchNumber )        PATCH_NUMBER=$2 ;;
+                     *)        echo 'invalid arguments specified'
+                               usage;;
+        esac
+        shift 2
+    done
+}
+
+function validate_input()
 {
     
-    mkdir -p ${PATCH_HOME_DIR}
-    cd ${PATCH_HOME_DIR}
-    rm -rf *.zip
-    wget https://github.com/gnsuryan/arm-oraclelinux-wls-admin-test/raw/master/src/main/p31471178_122130_Generic.zip
+    if test $# -ne 2
+    then
+      usage
+      exit 1
+    fi
+
+    if [ -z "${PATCH_FILE}" ];
+    then
+        echo "Patch File not provided."
+        usage
+        exit 1
+    fi
+
+    if [ -z "${PATCH_NUMBER}" ];
+    then
+        echo "Patch Number not provided."
+        usage
+        exit 1
+    fi
+
 }
+
+function copy_patch()
+{
+
+    ls -l ${WLS_FILE_SHARE_MOUNT}
+
+    if [[ ! -f ${WLS_FILE_SHARE_MOUNT}/${PATCH_FILE} ]];
+    then
+        echo "Patch file ${PATCH_FILE} not available on file share mount: ${WLS_FILE_SHARE_MOUNT}"
+        exit 1
+    fi
+
+    exit 0
+
+    echo "copying patch from file share to patch home directory..."
+    cp ${WLS_FILE_SHARE_MOUNT}/${PATCH_FILE} ${PATCH_HOME_DIR}/${PATCH_FILE}
+}
+
+function setup_patch()
+{
+    echo "Creating directory required for applying patch"
+    mkdir -p ${PATCH_HOME_DIR}
+
+    cleanup_patch
+}
+
+
+function cleanup_patch()
+{
+    echo "cleaning up..."
+    rm -rf ${PATCH_HOME_DIR}/*
+}
+trap cleanup_patch EXIT
+
 
 function set_wls_classpath()
 {
      cd $WLS_HOME/server/bin
      . ./setWLSEnv.sh
-     
-     echo $CLASSPATH
-     
-     echo $JAVA_HOME
-     export PATH=${WL_HOME}/../OPatch:$JAVA_HOME/bin:$PATH
+    
+     export PATH=${WL_HOME}/../OPatch:${JAVA_HOME}/bin:${PATH}
 }
 
 function check_opatch()
 {
-   opatch lsinventory -jdk $JAVA_HOME
-   
-   if [ $? == 1 ];
+   set_wls_classpath
+   opatch lsinventory -jdk ${JAVA_HOME} > /dev/null 2>&1
+
+   if [[ $? != 0 ]];
    then
-       echo "Unable to run opatch command."
-       exit 1
+     echo "opatch command failed. Please set WebLogic Classpath appropriately and try again"
+     exit 1
+   else
+     echo "opatch command verified successfully."
    fi
 }
 
 function install_patch()
 {
+    unzip -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
+
     echo "Applying Patch..."
-    unzip -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_ZIP_FILE}
-    cd ${PATCH_HOME_DIR}/${PATCH_NUMBER}
-    opatch napply -silent -jdk $JAVA_HOME
+    cd ${PATCH_HOME_DIR}
+    opatch napply -silent -jdk ${JAVA_HOME}
 }
 
 function verify_patch()
 {
     echo "Listing all Patches to see if it contains existing patch"
-    opatch lsinventory -jdk $JAVA_HOME
+    opatch lsinventory -jdk ${JAVA_HOME}
 
-    opatch lsinventory -jdk $JAVA_HOME | grep "Patch  ${PATCH_NUMBER}"
+    opatch lsinventory -jdk ${JAVA_HOME} | grep "Patch  ${PATCH_NUMBER}"
     patchApplied=$?
 
     if [ $patchApplied == "0" ];
@@ -57,35 +135,20 @@ function verify_patch()
     fi
 }
 
-
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_HOME_DIR="/u01/app/wls/patches"
-
-################### VALIDATIONS #####################
-if test $# -ne 2
-then
-  echo "Missing or Wrong Arguments "
-  echo "Usage: applyWLSPatch.sh <PATCH_ZIP_FILE> <PATCH_NUMBER>"
-  exit 1
-fi
-
-PATCH_ZIP_FILE="$1"
-PATCH_NUMBER="$2"
-
-if [ -z $PATCH_ZIP_FILE ] || [ -z $PATCH_NUMBER ];
-then
-  echo "Missing arguments: Usage: applyWLSPatch.sh <PATCH_ZIP_FILE>"
-  exit 1
-fi
-################### VALIDATIONS #####################
-
+WLS_FILE_SHARE_MOUNT="/mnt/wlsshare"
 WLS_HOME="/u01/app/wls/install/oracle/middleware/oracle_home/wlserver"
 
-download_patch_file
+get_param "$@"
 
-set_wls_classpath
+validate_input "$@"
+
+setup_patch
+
+copy_patch
 
 check_opatch
 
