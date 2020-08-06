@@ -35,6 +35,18 @@
             "metadata": {
                 "description": "Location for all resources."
             }
+        },
+        "wls_patch_file": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the WebLogic Patch File"
+            }
+        },
+        "wls_patch_number": {
+            "type": "string",
+            "metadata": {
+                "description": "WebLogic Patch Number"
+            }
         }
     },
     "variables": {
@@ -67,9 +79,9 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                       "skipDos2Unix":false,
-                      "timestamp":123456790,      
-                      "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installNginx.sh"],
-                      "commandToExecute": "sh installNginx.sh"
+                      "timestamp":"[utcNow()]",      
+                      "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installPatch.sh"],
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wls_patch_file'),' ',parameters('wls_patch_number')]"
                 }
             }
         }
