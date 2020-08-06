@@ -81,7 +81,7 @@
                       "skipDos2Unix":false,
                       "timestamp":"[utcNow()]",      
                       "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installPatch.sh"],
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wls_patch_file'),' ',parameters('wls_patch_number')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wls_patch_file'),' ',parameters('wls_patch_number'))]"
                 }
             }
         }
