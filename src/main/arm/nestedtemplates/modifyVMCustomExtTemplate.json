@@ -23,11 +23,11 @@
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
             }
         },
-        "adminVMName": {
+        "VMName": {
             "type": "string",
             "defaultValue": "adminVM",
             "metadata": {
-                "description": "Admin Server hosting VM name."
+                "description": "VM name."
             }
         },
         "location": {
@@ -38,7 +38,7 @@
         }
     },
     "variables": {
-        "name_scriptFile": "installNgnix.sh"
+        "name_scriptFile": "installPatch.sh"
     },
     "resources": [
         {
@@ -57,7 +57,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('adminVMName'),'/modifyVMScript')]",
+            "name": "[concat(parameters('VMName'),'/modifyVMScript')]",
             "apiVersion": "2019-07-01",
             "location": "[parameters('location')]",
             "properties": {
