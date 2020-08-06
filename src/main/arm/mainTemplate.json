@@ -16,24 +16,6 @@
          },
          "defaultValue": ""
       },
-      "aadsPortNumber": {
-         "type": "string",
-         "defaultValue": "636",
-         "metadata": {
-            "description": "Accessible port of the LDAP server."
-         }
-      },
-      "aadsPublicIP": {
-         "type": "string",
-         "defaultValue": "The LDAP server public IP address"
-      },
-      "aadsServerHost": {
-         "type": "string",
-         "defaultValue": "ldaps.example.com",
-         "metadata": {
-            "description": "The LDAP server host."
-         }
-      },
       "acceptOTNLicenseAgreement": {
          "type": "string",
          "metadata": {
@@ -70,60 +52,11 @@
             "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
          }
       },
-      "databaseType": {
-         "defaultValue": "oracle",
-         "type": "string",
-         "metadata": {
-            "description": "One of the supported database types"
-         }
-      },
-      "dbPassword": {
-         "defaultValue": "",
-         "type": "securestring",
-         "metadata": {
-            "description": "Password for Database"
-         }
-      },
-      "dbUser": {
-         "defaultValue": "",
-         "type": "string",
-         "metadata": {
-            "description": "Userid of Database"
-         }
-      },
       "dnsLabelPrefix": {
          "defaultValue": "wls",
          "type": "string",
          "metadata": {
             "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-         }
-      },
-      "dsConnectionURL": {
-         "defaultValue": "",
-         "type": "string",
-         "metadata": {
-            "description": "JDBC Connection String"
-         }
-      },
-      "enableAAD": {
-         "type": "bool",
-         "defaultValue": false,
-         "metadata": {
-            "description": "Bool value, if it's set to true, will enable Azure Active Directory after WebLogic Server starts."
-         }
-      },
-      "enableDB": {
-         "defaultValue": false,
-         "type": "bool",
-         "metadata": {
-            "description": "If true, use the supplied parameters to connect the cluster to a pre-provisioned database."
-         }
-      },
-      "jdbcDataSourceName": {
-         "type": "string",
-         "defaultValue": "",
-         "metadata": {
-            "description": "JNDI Name for JDBC Datasource"
          }
       },
       "linuxOSVersion": {
@@ -183,48 +116,6 @@
             "description": "Provide Weblogic domain name"
          }
       },
-      "wlsLDAPGroupBaseDN": {
-         "type": "string",
-         "defaultValue": "null",
-         "metadata": {
-            "description": "The base distinguished name (DN) of the tree in the LDAP directory that contains groups."
-         }
-      },
-      "wlsLDAPPrincipal": {
-         "type": "string",
-         "defaultValue": "null",
-         "metadata": {
-            "description": "The Distinguished Name (DN) of the LDAP user that WebLogic Server should use to connect to the LDAP server."
-         }
-      },
-      "wlsLDAPPrincipalPassword": {
-         "type": "securestring",
-         "defaultValue": "[newGuid()]",
-         "metadata": {
-            "description": "The credential (usually a password) used to connect to the LDAP server."
-         }
-      },
-      "wlsLDAPProviderName": {
-         "type": "string",
-         "defaultValue": "AzureActiveDirectoryProvider",
-         "metadata": {
-            "description": "The value used for creating authentication provider name of WebLogic Server."
-         }
-      },
-      "wlsLDAPSSLCertificate": {
-         "type": "string",
-         "defaultValue": "null",
-         "metadata": {
-            "description": "Client certificate that will be imported to trust store of SSL."
-         }
-      },
-      "wlsLDAPUserBaseDN": {
-         "type": "string",
-         "defaultValue": "null",
-         "metadata": {
-            "description": "The base distinguished name (DN) of the tree in the LDAP directory that contains users."
-         }
-      },
       "wlsPassword": {
          "type": "securestring",
          "metadata": {
@@ -239,9 +130,7 @@
       }
    },
    "variables": {
-      "name_aadLinkedTemplateName": "aadNestedTemplate.json",
-      "name_adminLinkedTemplateName": "adminTemplate.json",
-      "name_dbLinkedTemplate": "dbTemplate.json"
+      "name_adminLinkedTemplateName": "adminTemplate.json"
    },
    "resources": [
       {
@@ -324,134 +213,11 @@
          }
       },
       {
-         "name": "dbLinkedTemplate",
-         "type": "Microsoft.Resources/deployments",
-         "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'adminLinkedTemplate')]"
-         ],
-         "apiVersion": "2019-10-01",
-         "condition": "[parameters('enableDB')]",
-         "properties": {
-            "mode": "Incremental",
-            "templateLink": {
-               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_dbLinkedTemplate')))]",
-               "contentVersion": "1.0.0.0"
-            },
-            "parameters": {
-               "_artifactsLocation": {
-                  "value": "[parameters('_artifactsLocation')]"
-               },
-               "_artifactsLocationSasToken": {
-                  "value": "[parameters('_artifactsLocationSasToken')]"
-               },
-               "adminVMName": {
-                  "value": "[parameters('adminVMName')]"
-               },
-               "databaseType": {
-                  "value": "[parameters('databaseType')]"
-               },
-               "dbPassword": {
-                  "value": "[parameters('dbPassword')]"
-               },
-               "dbUser": {
-                  "value": "[parameters('dbUser')]"
-               },
-               "dsConnectionURL": {
-                  "value": "[parameters('dsConnectionURL')]"
-               },
-               "jdbcDataSourceName": {
-                  "value": "[parameters('jdbcDataSourceName')]"
-               },
-               "location": {
-                  "value": "[parameters('location')]"
-               },
-               "wlsPassword": {
-                  "value": "[parameters('wlsPassword')]"
-               },
-               "wlsUserName": {
-                  "value": "[parameters('wlsUserName')]"
-               }
-
-            }
-         }
-      },
-      {
-         "name": "aadLinkedTemplate",
-         "type": "Microsoft.Resources/deployments",
-         "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'dbLinkedTemplate')]"
-         ],
-         "apiVersion": "2019-10-01",
-         "condition": "[parameters('enableAAD')]",
-         "properties": {
-            "mode": "Incremental",
-            "templateLink": {
-               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_aadLinkedTemplateName')))]",
-               "contentVersion": "1.0.0.0"
-            },
-            "parameters": {
-               "_artifactsLocation": {
-                  "value": "[parameters('_artifactsLocation')]"
-               },
-               "_artifactsLocationSasToken": {
-                  "value": "[parameters('_artifactsLocationSasToken')]"
-               },
-               "aadsPortNumber": {
-                  "value": "[parameters('aadsPortNumber')]"
-               },
-               "aadsPublicIP": {
-                  "value": "[parameters('aadsPublicIP')]"
-               },
-               "aadsServerHost": {
-                  "value": "[parameters('aadsServerHost')]"
-               },
-               "adminPassword": {
-                  "value": "[parameters('adminPasswordOrKey')]"
-               },
-               "adminVMName": {
-                  "value": "[parameters('adminVMName')]"
-               },
-               "location": {
-                  "value": "[parameters('location')]"
-               },
-               "wlsDomainName": {
-                  "value": "[parameters('wlsDomainName')]"
-               },
-               "wlsLDAPGroupBaseDN": {
-                  "value": "[parameters('wlsLDAPGroupBaseDN')]"
-               },
-               "wlsLDAPPrincipal": {
-                  "value": "[parameters('wlsLDAPPrincipal')]"
-               },
-               "wlsLDAPPrincipalPassword": {
-                  "value": "[parameters('wlsLDAPPrincipalPassword')]"
-               },
-               "wlsLDAPProviderName": {
-                  "value": "[parameters('wlsLDAPProviderName')]"
-               },
-               "wlsLDAPSSLCertificate": {
-                  "value": "[parameters('wlsLDAPSSLCertificate')]"
-               },
-               "wlsLDAPUserBaseDN": {
-                  "value": "[parameters('wlsLDAPUserBaseDN')]"
-               },
-               "wlsPassword": {
-                  "value": "[parameters('wlsPassword')]"
-               },
-               "wlsUserName": {
-                  "value": "[parameters('wlsUserName')]"
-               }
-            }
-         }
-      },
-      {
          "apiVersion": "2019-10-01",
          "name": "admin.end",
          "type": "Microsoft.Resources/deployments",
          "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'adminLinkedTemplate')]",
-            "[resourceId('Microsoft.Resources/deployments', 'dbLinkedTemplate')]",
-            "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]"
+            "[resourceId('Microsoft.Resources/deployments', 'adminLinkedTemplate')]"
          ],
          "properties": {
             "mode": "Incremental",
