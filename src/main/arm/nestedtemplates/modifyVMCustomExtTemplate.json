@@ -72,7 +72,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                       "skipDos2Unix":false,
-                      "timestamp":"987654321",
+                      "timestamp": "[int(parameters('wls_patch_timestamp'))]",
                       "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installPatch.sh"],
                       "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-patchNumber',' ',parameters('wls_patch_number'))]"
                 }
