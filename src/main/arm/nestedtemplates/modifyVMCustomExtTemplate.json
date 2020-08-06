@@ -61,20 +61,6 @@
     },
     "resources": [
         {
-            "apiVersion": "2019-10-01",
-            "name": "6b253477-1753-5eb1-9448-506ab47494d7",
-            "type": "Microsoft.Resources/deployments",
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                    ]
-                }
-            }
-        },
-        {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('VMName'),'/modifyVMScript')]",
             "apiVersion": "2019-07-01",
@@ -86,9 +72,9 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                       "skipDos2Unix":false,
-                      "timestamp":"[parameters('wls_patch_timestamp')]",
+                      "timestamp":"987654321",
                       "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installPatch.sh"],
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wls_patch_file'),' ',parameters('wls_patch_number'))]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-patchNumber',' ',parameters('wls_patch_number'))]"
                 }
             }
         }
