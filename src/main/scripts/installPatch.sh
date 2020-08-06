@@ -30,7 +30,7 @@ function get_param()
 function validate_input()
 {
     
-    if test $# -ne 2
+    if test $# -ne 4
     then
       usage
       exit 1
@@ -63,8 +63,6 @@ function copy_patch()
         exit 1
     fi
 
-    exit 0
-
     echo "copying patch from file share to patch home directory..."
     cp ${WLS_FILE_SHARE_MOUNT}/${PATCH_FILE} ${PATCH_HOME_DIR}/${PATCH_FILE}
 }
@@ -86,18 +84,9 @@ function cleanup_patch()
 trap cleanup_patch EXIT
 
 
-function set_wls_classpath()
-{
-     cd $WLS_HOME/server/bin
-     . ./setWLSEnv.sh
-    
-     export PATH=${WL_HOME}/../OPatch:${JAVA_HOME}/bin:${PATH}
-}
-
 function check_opatch()
 {
-   set_wls_classpath
-   opatch lsinventory -jdk ${JAVA_HOME} > /dev/null 2>&1
+   runuser -l oracle -c '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory -jdk ${JAVA_HOME} > /dev/null 2>&1'
 
    if [[ $? != 0 ]];
    then
@@ -111,18 +100,17 @@ function check_opatch()
 function install_patch()
 {
     unzip -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
+    chown -R oracle:oracle ${PATCH_HOME_DIR}
 
     echo "Applying Patch..."
-    cd ${PATCH_HOME_DIR}
-    opatch napply -silent -jdk ${JAVA_HOME}
+    runuser -l oracle -c '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; cd /u01/app/wls/patches; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent -jdk ${JAVA_HOME}'
 }
 
 function verify_patch()
 {
     echo "Listing all Patches to see if it contains existing patch"
-    opatch lsinventory -jdk ${JAVA_HOME}
-
-    opatch lsinventory -jdk ${JAVA_HOME} | grep "Patch  ${PATCH_NUMBER}"
+    
+    runuser -l oracle -c '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory -jdk ${JAVA_HOME} | grep "Patch  ${PATCH_NUMBER}"'
     patchApplied=$?
 
     if [ $patchApplied == "0" ];
@@ -140,7 +128,6 @@ function verify_patch()
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_HOME_DIR="/u01/app/wls/patches"
 WLS_FILE_SHARE_MOUNT="/mnt/wlsshare"
-WLS_HOME="/u01/app/wls/install/oracle/middleware/oracle_home/wlserver"
 
 get_param "$@"
 
