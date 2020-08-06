@@ -47,6 +47,13 @@
             "metadata": {
                 "description": "WebLogic Patch Number"
             }
+        },
+        "wls_patch_timestamp": {
+            "type": "string",
+            "defaultValue": "[utcNow()]",
+            "metadata": {
+                "description": "Timestamp required for uniquely identifying and executing custom extension script for WebLogic Patching"
+            }
         }
     },
     "variables": {
@@ -79,7 +86,7 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                       "skipDos2Unix":false,
-                      "timestamp":"[utcNow()]",      
+                      "timestamp":"[parameters('wls_patch_timestamp')]",
                       "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/scripts/installPatch.sh"],
                       "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wls_patch_file'),' ',parameters('wls_patch_number'))]"
                 }
