@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-usage()
+function usage()
 {
 cat << USAGE >&2
 Usage:
@@ -14,7 +14,7 @@ USAGE
 exit 1
 }
 
-get_param()
+function get_param()
 {
     while [ "$1" ]
     do
@@ -30,7 +30,7 @@ get_param()
     done
 }
 
-validate_input()
+function validate_input()
 {
 
     az account list > /dev/null
@@ -48,26 +48,60 @@ validate_input()
 
 }
 
+function get_storage_account_key()
+{
+  STORAGE_ACCOUNT_KEY=$(az storage account keys list --resource-group "${RESOURCE_GROUP_NAME}" --account-name "$STORAGE_ACCOUNT_NAME" --query '[0].value' | tr -d '"')
+}
+
+function check_fileshare_exists_on_storage_account()
+{
+    az storage share list --account-key "${STORAGE_ACCOUNT_KEY}" --account-name "${STORAGE_ACCOUNT_NAME}" --query '[].name' | grep "${AZURE_WLS_FILE_SHARE}"
+
+    if [[ $? == 0 ]];
+    then
+        echo "File Share ${AZURE_WLS_FILE_SHARE} exists on Storage Account: ${STORAGE_ACCOUNT_NAME}"
+
+    else
+        echo "File Share ${AZURE_WLS_FILE_SHARE} does not exists on Storage Account: ${STORAGE_ACCOUNT_NAME}"
+        echo "creating and mounting File Share ${AZURE_WLS_FILE_SHARE} ..."
+        createAndMountFileShare
+    fi
+}
+
+function upload_file_to_fileshare()
+{
+    az storage file upload --share-name ${AZURE_WLS_FILE_SHARE} --source ${LOCAL_FILE_PATH} --account-key ${STORAGE_ACCOUNT_KEY} --account-name ${STORAGE_ACCOUNT_NAME}
+
+    if [[ $? == 0 ]];
+    then
+        echo "File Upload to Azure File Share completed successfully"
+        exit 0
+    else
+        echo "File Upload to Azure File Share failed. Please try again"
+        exit 1
+    fi
+}
+
+# Mount the Azure file share on all VMs created
+function createAndMountFileShare()
+{
+    az storage share create --name ${AZURE_WLS_FILE_SHARE} --quota 10 --account-name ${STORAGE_ACCOUNT_NAME} --account-key ${STORAGE_ACCOUNT_KEY}
+    az vm run-command invoke -g ${RESOURCE_GROUP_NAME} -n adminVM --command-id RunShellScript --scripts "wget https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/scripts/createAndMountFileShare.sh; chmod +x createAndMountFileShare.sh; ./createAndMountFileShare.sh -storageAccountName ${STORAGE_ACCOUNT_NAME} -storageAccountKey ${STORAGE_ACCOUNT_KEY} -fileShareName ${AZURE_WLS_FILE_SHARE}"
+}
+
 
 #main
 
+AZURE_WLS_FILE_SHARE="wlsshare"
+WLS_FILE_SHARE_MOUNT="/mnt/${AZURE_WLS_FILE_SHARE}"
 
 validate_input "$@"
 
 get_param "$@"
 
-AZURE_WLS_FILE_SHARE="wlsshare"
+get_storage_account_key
 
-AZURE_STORAGE_KEY=$(az storage account keys list --resource-group "$RESOURCE_GROUP_NAME" --account-name "$STORAGE_ACCOUNT_NAME" --query '[0].value' | tr -d '"')
+check_fileshare_exists_on_storage_account
 
-az storage file upload --share-name $AZURE_WLS_FILE_SHARE --source $LOCAL_FILE_PATH --account-key $AZURE_STORAGE_KEY --account-name $STORAGE_ACCOUNT_NAME
-
-if [[ $? == 0 ]];
-then
-    echo "File Upload to Azure File Share completed successfully"
-    exit 0
-else
-    echo "File Upload to Azure File Share failed. Please try again"
-    exit 1
-fi
+upload_file_to_fileshare
 
