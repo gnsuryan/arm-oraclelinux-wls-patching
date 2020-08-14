@@ -48,7 +48,7 @@ function runCommandAsOracleUser()
    cmd="$1"
    echo "Exec command $cmd"
 
-   runuser -l gnsuryan -c "$cmd" &
+   runuser -l oracle -c "$cmd" &
    myPid=$!
    wait $myPid
    status="$?"
@@ -101,7 +101,7 @@ trap cleanup_patch EXIT
 
 function check_opatch()
 {
-   ret=$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory  > /dev/null 2>&1')
+   ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory  > /dev/null 2>&1')"
    echo "$ret"
 
    retVal=$(getReturnCode "$ret")
@@ -127,7 +127,7 @@ function install_patch()
     chown -R oracle:oracle ${PATCH_HOME_DIR}
 
     echo "Applying Patch..."
-    ret=$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; cd /u01/app/wls/patches; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent')
+    ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; cd /u01/app/wls/patches; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent')"
     echo "$ret"
     
     retVal=$(getReturnCode "$ret")
@@ -146,12 +146,11 @@ function verify_patch()
 {
     echo "Listing all Patches to see if it contains existing patch"
     
-    ret=$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory -jdk ${JAVA_HOME} | grep "Patch  ${PATCH_NUMBER}"')
+    ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory -jdk ${JAVA_HOME}')"
     echo "$ret"
+    retVal=$(echo "$ret"|grep "Patch  ${PATCH_NUMBER}")
 
-    retVal=$(getReturnCode "$ret")
-
-    if [ "$retVal" == "0" ];
+    if [ "$?" == "0" ];
     then
       echo "PATCH INSTALL: SUCCESS"
       exit 0
