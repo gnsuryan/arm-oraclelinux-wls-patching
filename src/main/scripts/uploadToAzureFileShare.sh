@@ -92,7 +92,7 @@ function createAndMountFileShare()
 
 #main
 
-AZURE_WLS_FILE_SHARE="wlsshare"
+AZURE_WLS_FILE_SHARE="wlspatchshare"
 WLS_FILE_SHARE_MOUNT="/mnt/${AZURE_WLS_FILE_SHARE}"
 
 validate_input "$@"
