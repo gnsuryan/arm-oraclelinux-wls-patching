@@ -42,12 +42,6 @@
                 "description": "Name of the WebLogic Patch File"
             }
         },
-        "wls_patch_number": {
-            "type": "string",
-            "metadata": {
-                "description": "WebLogic Patch Number"
-            }
-        },
         "wls_patch_timestamp": {
             "type": "string",
             "defaultValue": "[utcNow('yyMMddHHmm')]",
@@ -74,7 +68,7 @@
                       "skipDos2Unix":false,
                       "timestamp": "[int(parameters('wls_patch_timestamp'))]",
                       "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/scripts/installPatch.sh"],
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-patchNumber',' ',parameters('wls_patch_number'))]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'))]"
                 }
             }
         }
