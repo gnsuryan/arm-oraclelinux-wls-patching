@@ -57,20 +57,43 @@ function check_fileshare_exists_on_storage_account()
 {
     az storage share list --account-key "${STORAGE_ACCOUNT_KEY}" --account-name "${STORAGE_ACCOUNT_NAME}" --query '[].name' | grep "${AZURE_WLS_FILE_SHARE}"
 
-    if [[ $? == 0 ]];
+    if [[ $? != 0 ]];
     then
-        echo "File Share ${AZURE_WLS_FILE_SHARE} exists on Storage Account: ${STORAGE_ACCOUNT_NAME}"
-
-    else
         echo "File Share ${AZURE_WLS_FILE_SHARE} does not exists on Storage Account: ${STORAGE_ACCOUNT_NAME}"
         echo "creating and mounting File Share ${AZURE_WLS_FILE_SHARE} ..."
         createAndMountFileShare
+    else
+        echo "File Share ${AZURE_WLS_FILE_SHARE} exists on Storage Account: ${STORAGE_ACCOUNT_NAME}"
+    fi
+
+    check_and_create_patch_directory
+}
+
+function check_and_create_patch_directory()
+{
+    result=$(az storage directory exists --name ${PATCH_DIR} --share-name ${AZURE_WLS_FILE_SHARE} --account-key ${STORAGE_ACCOUNT_KEY} --account-name ${STORAGE_ACCOUNT_NAME}  --query 'exists')
+
+    if [ "$result" == "false" ];
+    then
+        echo "Patch Directory not found in WLS Azure File Storage: ${AZURE_WLS_FILE_SHARE}"
+        echo "Creating  Patch Directory in WLS Azure File Storage: ${AZURE_WLS_FILE_SHARE}"
+        result=$(az storage directory create --name ${PATCH_DIR} --share-name ${AZURE_WLS_FILE_SHARE} --account-key ${STORAGE_ACCOUNT_KEY} --account-name ${STORAGE_ACCOUNT_NAME} --query 'created')
+        if [ "$result" == "false" ];
+        then
+            echo "Unable to create Patch Directory in WLS Azure File Storage: ${AZURE_WLS_FILE_SHARE}"
+            exit 1
+        else
+            echo "Patch Directory ${PATCH_DIR} successfully created in WLS Azure File Storage: ${AZURE_WLS_FILE_SHARE}"
+        fi
+    else
+        echo "Patch Directory ${PATCH_DIR} already exists in WLS Azure File Storage: ${AZURE_WLS_FILE_SHARE}"
     fi
 }
 
+
 function upload_file_to_fileshare()
 {
-    az storage file upload --share-name ${AZURE_WLS_FILE_SHARE} --source ${LOCAL_FILE_PATH} --account-key ${STORAGE_ACCOUNT_KEY} --account-name ${STORAGE_ACCOUNT_NAME}
+    az storage file upload --share-name ${AZURE_WLS_FILE_SHARE} --source ${LOCAL_FILE_PATH} --account-key ${STORAGE_ACCOUNT_KEY} --account-name ${STORAGE_ACCOUNT_NAME} --path ${PATCH_DIR}
 
     if [[ $? == 0 ]];
     then
@@ -85,14 +108,23 @@ function upload_file_to_fileshare()
 # Mount the Azure file share on all VMs created
 function createAndMountFileShare()
 {
-    az storage share create --name ${AZURE_WLS_FILE_SHARE} --quota 10 --account-name ${STORAGE_ACCOUNT_NAME} --account-key ${STORAGE_ACCOUNT_KEY}
-    az vm run-command invoke -g ${RESOURCE_GROUP_NAME} -n adminVM --command-id RunShellScript --scripts "wget https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/scripts/createAndMountFileShare.sh; chmod +x createAndMountFileShare.sh; ./createAndMountFileShare.sh -storageAccountName ${STORAGE_ACCOUNT_NAME} -storageAccountKey ${STORAGE_ACCOUNT_KEY} -fileShareName ${AZURE_WLS_FILE_SHARE}"
+    result=$(az storage share create --name ${AZURE_WLS_FILE_SHARE} --quota 10 --account-name ${STORAGE_ACCOUNT_NAME} --account-key ${STORAGE_ACCOUNT_KEY} --query 'created')
+
+    if [ "$result" == "true" ];
+    then
+       echo "WLS Azure File Share created: ${AZURE_WLS_FILE_SHARE}"
+        az vm run-command invoke -g ${RESOURCE_GROUP_NAME} -n adminVM --command-id RunShellScript --scripts "wget https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/scripts/createAndMountFileShare.sh; chmod +x createAndMountFileShare.sh; ./createAndMountFileShare.sh -storageAccountName ${STORAGE_ACCOUNT_NAME} -storageAccountKey ${STORAGE_ACCOUNT_KEY} -fileShareName ${AZURE_WLS_FILE_SHARE}"
+    else
+        echo "Failed to create WLS Azure File Share: ${AZURE_WLS_FILE_SHARE}"
+        exit 1
+    fi
 }
 
 
 #main
 
-AZURE_WLS_FILE_SHARE="wlspatchshare"
+AZURE_WLS_FILE_SHARE="wlsshare"
+PATCH_DIR="patches"
 WLS_FILE_SHARE_MOUNT="/mnt/${AZURE_WLS_FILE_SHARE}"
 
 validate_input "$@"
