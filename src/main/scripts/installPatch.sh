@@ -163,7 +163,7 @@ function verify_patch()
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PATCH_DIR="/u01/app/wls/patches"
+PATCH_HOME_DIR="/u01/app/wls/patches"
 WLS_PATCH_FILE_SHARE_MOUNT="/mnt/wlsshare/patches"
 
 get_param "$@"
