@@ -134,7 +134,7 @@ function install_patch()
     unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
     chown -R oracle:oracle ${PATCH_HOME_DIR}
 
-    JAVA_HOME=$(runCommandAsOracleUser ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
+    JAVA_HOME=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
 
     echo "JAVA_HOME: $JAVA_HOME"
 
