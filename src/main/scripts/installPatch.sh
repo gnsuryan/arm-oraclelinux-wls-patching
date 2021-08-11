@@ -134,8 +134,10 @@ function install_patch()
     unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
     chown -R oracle:oracle ${PATCH_HOME_DIR}
 
+    JAVA_HOME="$(runCommandAsOracleUser \". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo $JAVA_HOME\")"
+
     echo "Applying Patch..."
-    ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; cd /u01/app/wls/patches; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent')"
+    ret="$(runCommandAsOracleUser \"cd /u01/app/wls/install/oracle/middleware/oracle_home/OPatch && ./opatch apply -silent -jre $JAVA_HOME/jre  /u01/app/wls/patches\")"
     echo "$ret"
     
     retVal=$(getReturnCode "$ret")
@@ -175,9 +177,12 @@ function shutdown_server()
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
      systemctl shutdown wls_nodemanager.service
+     systemctl status wls_nodemanager.service
      systemctl shutdown wls_admin.service
+     systemctl status wls_admin.service
   else
      systemctl shutdown wls_nodemanager.service
+     systemctl status wls_nodemanager.service
   fi
 
   echo "weblogic server services shutdown complete on VM $SERVER_VM_NAME"
@@ -191,9 +196,13 @@ function restart_server()
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
      systemctl start wls_nodemanager.service
+     systemctl status wls_nodemanager.service
      systemctl start wls_admin.service
+     systemctl status wls_admin.service
+
   else
      systemctl start wls_nodemanager.service
+     systemctl status wls_nodemanager.service
   fi
 
   echo "weblogic server services restart complete on VM $SERVER_VM_NAME"
