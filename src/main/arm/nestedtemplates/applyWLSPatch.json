@@ -7,7 +7,7 @@
             "metadata": {
                 "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             },
-            "defaultValue": "https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-admin-test/master/src/main/arm/"
+            "defaultValue": "https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/arm/"
         },
         "_artifactsLocationModifyVMCustomExtTemplate": {
             "defaultValue": "[if(contains(parameters('_artifactsLocation'), 'githubusercontent'), parameters('_artifactsLocation'), deployment().properties.templateLink.uri)]",
@@ -32,6 +32,7 @@
         },
         "location": {
             "type": "string",
+            "default":"[resourceGroup().location]"
             "metadata": {
                 "description": "Location for all resources."
             }
@@ -67,8 +68,14 @@
                 "settings": {
                       "skipDos2Unix":false,
                       "timestamp": "[int(parameters('wls_patch_timestamp'))]",
-                      "fileUris": ["https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/scripts/installPatch.sh"],
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'))]"
+                      "settings": {
+                          "fileUris": [
+                                "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
+                          ]
+                      },
+                      "protectedSettings": {
+                        "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'))]"
+                      }
                 }
             }
         }
