@@ -131,7 +131,7 @@ function getPatchNumber()
 
 function install_patch()
 {
-    unzip -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
+    unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
     chown -R oracle:oracle ${PATCH_HOME_DIR}
 
     echo "Applying Patch..."
