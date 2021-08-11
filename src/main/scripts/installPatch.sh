@@ -184,12 +184,10 @@ function shutdown_server()
 
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
-     systemctl shutdown wls_nodemanager.service
-     systemctl status wls_nodemanager.service
-     systemctl shutdown wls_admin.service
+     systemctl stop wls_admin.service
      systemctl status wls_admin.service
   else
-     systemctl shutdown wls_nodemanager.service
+     systemctl stop wls_nodemanager.service
      systemctl status wls_nodemanager.service
   fi
 
@@ -203,11 +201,8 @@ function restart_server()
 
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
-     systemctl start wls_nodemanager.service
-     systemctl status wls_nodemanager.service
      systemctl start wls_admin.service
      systemctl status wls_admin.service
-
   else
      systemctl start wls_nodemanager.service
      systemctl status wls_nodemanager.service
