@@ -171,7 +171,6 @@ function verify_patch()
     if [ "$?" == "0" ];
     then
       echo "PATCH INSTALL: SUCCESS"
-      exit 0
     else
       echo "PATCH INSTALL: FAILED"
       exit 1
