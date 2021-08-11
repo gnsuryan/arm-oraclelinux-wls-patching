@@ -29,7 +29,7 @@ function get_param()
 function validate_input()
 {
     
-    if test $# -ne 2
+    if test $# -ne 4
     then
       usage
       exit 1
