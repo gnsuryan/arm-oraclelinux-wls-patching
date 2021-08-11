@@ -134,12 +134,18 @@ function install_patch()
     unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
     chown -R oracle:oracle ${PATCH_HOME_DIR}
 
-    JAVA_HOME=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
+    JAVA_HOME=$(runCommandAsOracleUser ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
 
-    patchApplyCommand="cd /u01/app/wls/install/oracle/middleware/oracle_home/OPatch && ./opatch apply -silent -jre \$JAVA_HOME/jre  /u01/app/wls/patches/\$PATCH_NUMBER"
+    echo "JAVA_HOME: $JAVA_HOME"
 
-    echo "Applying Patch..."
-    ret=$(runuser -l oracle -c "$patchApplyCommand")
+    PATCH_NUMBER=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch query --all ${PATCH_HOME_DIR}/${PATCH_FILE} |grep '<ONEOFF'|grep 'REF_ID'|cut -d'\"' -f2")
+
+    echo "PATCH_NUMBER: $PATCH_NUMBER"
+
+    patchApplyCommand="cd /u01/app/wls/install/oracle/middleware/oracle_home/OPatch && ./opatch apply -silent -jre ${JAVA_HOME}/jre  ${PATCH_HOME_DIR}/$PATCH_NUMBER"
+
+    echo "Applying Patch... using command: $patchApplyCommand"
+    ret=$(runCommandAsOracleUser "$patchApplyCommand")
     echo "$ret"
     
     retVal=$(getReturnCode "$ret")
