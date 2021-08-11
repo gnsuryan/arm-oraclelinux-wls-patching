@@ -73,7 +73,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'))]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-serverVMName',' ',parameters('VMName'))]"
                 }
             }
         }

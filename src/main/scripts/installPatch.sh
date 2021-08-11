@@ -18,6 +18,7 @@ function get_param()
         case "$1" in    
          -h |?|--help )        usage ;;
          -patchFile   )        PATCH_FILE=$2 ;;
+         -serverVMName  )      SERVER_VM_NAME=$2 ;;
                      *)        echo 'invalid arguments specified'
                                usage;;
         esac
@@ -37,6 +38,13 @@ function validate_input()
     if [ -z "${PATCH_FILE}" ];
     then
         echo "Patch File not provided."
+        usage
+        exit 1
+    fi
+
+    if [ -z "${SERVER_VM_NAME}" ];
+    then
+        echo "Server VM Name not provided."
         usage
         exit 1
     fi
@@ -160,6 +168,39 @@ function verify_patch()
     fi
 }
 
+function shutdown_server()
+{
+  echo "shutting down weblogic server services on VM $SERVER_VM_NAME"
+
+  if [ "$SERVER_VM_NAME" == "adminVM" ];
+  then
+     systemctl shutdown wls_nodemanager.service
+     systemctl shutdown wls_admin.service
+  else
+     systemctl shutdown wls_nodemanager.service
+  fi
+
+  echo "weblogic server services shutdown complete on VM $SERVER_VM_NAME"
+
+}
+
+function restart_server()
+{
+  echo "Restarting weblogic server services on VM $SERVER_VM_NAME"
+
+  if [ "$SERVER_VM_NAME" == "adminVM" ];
+  then
+     systemctl start wls_nodemanager.service
+     systemctl start wls_admin.service
+  else
+     systemctl start wls_nodemanager.service
+  fi
+
+  echo "weblogic server services restart complete on VM $SERVER_VM_NAME"
+
+}
+
+
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -178,6 +219,10 @@ getPatchNumber
 
 check_opatch
 
+shutdown_server
+
 install_patch
 
 verify_patch
+
+restart_server
