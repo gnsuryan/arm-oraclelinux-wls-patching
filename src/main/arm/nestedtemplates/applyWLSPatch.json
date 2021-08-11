@@ -68,14 +68,12 @@
                 "settings": {
                       "skipDos2Unix":false,
                       "timestamp": "[int(parameters('wls_patch_timestamp'))]",
-                      "settings": {
-                          "fileUris": [
-                                "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
-                          ]
-                      },
-                      "protectedSettings": {
-                        "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'))]"
-                      }
+                      "fileUris": [
+                            "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
+                      ]
+                },
+                "protectedSettings": {
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'))]"
                 }
             }
         }
