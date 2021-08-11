@@ -32,7 +32,7 @@
         },
         "location": {
             "type": "string",
-            "default":"[resourceGroup().location]"
+            "default":"[resourceGroup().location]",
             "metadata": {
                 "description": "Location for all resources."
             }
