@@ -24,7 +24,7 @@
             }
         },
         "isClusterDomain": {
-            "type": "boolean",
+            "type": "bool",
             "defaultvalue" : false,
             "metadata" : {
                 "description": "boolean value indicating if the existing domain is a cluster/dynamic cluster domain or not. If domain has only Admin Server, pass the value as false. For Cluster and Dynamic Cluster Domains, pass the value as true."
@@ -96,6 +96,7 @@
             "name": "[concat(parameters('managedServerPrefix'),copyindex(),'/newuserscript')]",
             "apiVersion": "2019-07-01",
             "location": "[parameters('location')]",
+            "condition": "[if(parameters('isClusterDomain'))]",
             "copy": {
                 "name": "ManagedVMExtensionLoop",
                 "count": "[parameters('numberOfmanagedServerVMs')]"
