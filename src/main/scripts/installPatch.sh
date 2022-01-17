@@ -166,7 +166,7 @@ function verify_patch()
     echo "$ret"
     retVal=$(echo "$ret"|grep "Patch  ${PATCH_NUMBER}")
 
-    if [ "$retVal" == "0" ];
+    if [ "$?" == "0" ];
     then
       echo "PATCH INSTALL: SUCCESS"
     else
@@ -207,8 +207,8 @@ function shutdown_server()
 function create_server_shutdown_py_script()
 {
     echo "Creating server shutdown script for server $SERVER_NAME"
-    cat <<EOF >$DOMAIN_PATH/server-shutdown.py
-connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
+    cat <<EOF >$DOMAIN_PATH/shutdown-server.py
+connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
 domainRuntime()
 slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
 status = slrBean.getState()
@@ -225,8 +225,8 @@ EOF
 function create_server_start_py_script()
 {
     echo "Creating server start script for server $SERVER_NAME"
-    cat <<EOF >$DOMAIN_PATH/server-start.py
-connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
+    cat <<EOF >$DOMAIN_PATH/start-server.py
+connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
 domainRuntime()
 slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
 status = slrBean.getState()
@@ -269,6 +269,35 @@ function start_server()
 
 }
 
+#This function to wait for admin server
+function wait_for_admin()
+{
+ #wait for admin to start
+count=1
+CHECK_URL="http://$WLS_ADMIN_URL/weblogic/ready"
+status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
+echo "Waiting for admin server to start"
+while [[ "$status" != "200" ]]
+do
+  echo "."
+  count=$((count+1))
+  if [ $count -le 30 ];
+  then
+      sleep 1m
+  else
+     echo "Error : Maximum attempts exceeded while starting admin server"
+     exit 1
+  fi
+  status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
+  if [ "$status" == "200" ];
+  then
+     echo "Admin Server started succesfully..."
+     break
+  fi
+done
+}
+
+
 function acquireLockAndExecute()
 {
     echo "$$ trying to acquire lock"
@@ -284,11 +313,15 @@ function acquireLockAndExecute()
 
         check_opatch
 
+        wait_for_admin
+
         shutdown_server
 
         install_patch
 
         verify_patch
+
+        wait_for_admin
 
         start_server
 
