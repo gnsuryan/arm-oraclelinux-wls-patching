@@ -3,12 +3,6 @@
 function validate_input()
 {
     
-    if test $# -ne 4
-    then
-      usage
-      exit 1
-    fi
-
     if [ -z "${PATCH_FILE}" ];
     then
         echo "Patch File not provided."
@@ -50,7 +44,6 @@ function validate_input()
         usage
         exit 1
     fi
-
 }
 
 function runCommandAsOracleUser()
@@ -104,6 +97,9 @@ function cleanup_patch()
     then
         rm -rf ${PATCH_HOME_DIR}/*
     fi
+
+    rm -rf $DOMAIN_PATH/*.py
+
 
 }
 trap cleanup_patch EXIT
@@ -287,9 +283,10 @@ CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_HOME_DIR="/u01/app/wls/patches"
 WLS_FILE_SHARE="/mnt/wlsshare"
 WLS_PATCH_FILE_SHARE_MOUNT="${WLS_FILE_SHARE}/patches"
+DOMAIN_PATH="/u01/domains"
 
 read PATCH_FILE SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
-validate_input "$@"
+validate_input
 
 acquireLockAndExecute

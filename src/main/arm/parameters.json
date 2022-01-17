@@ -8,6 +8,9 @@
         "adminVMName" : {
             "value" : "GEN-UNIQUE"
         },
+        "wlsAdminURL": {
+            "value" : "GEN-UNIQUE"
+        },
         "wlsUserName": {
             "value" : "GEN-UNIQUE"
         },
