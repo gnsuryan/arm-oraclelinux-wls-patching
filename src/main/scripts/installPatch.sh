@@ -166,7 +166,7 @@ function verify_patch()
     echo "$ret"
     retVal=$(echo "$ret"|grep "Patch  ${PATCH_NUMBER}")
 
-    if [ "$?" == "0" ];
+    if [ "$retVal" == "0" ];
     then
       echo "PATCH INSTALL: SUCCESS"
     else
@@ -189,7 +189,9 @@ function shutdown_server()
      create_server_shutdown_py_script
      ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/shutdown-server.py')"
 
-     if [ "$ret" == "0" ];
+     retVal=$(getReturnCode "$ret")
+
+     if [ "$retVal" == "0" ];
      then
        echo "Server $SERVER_NAME successfully shutdown"
      else
@@ -210,7 +212,7 @@ connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
 domainRuntime()
 slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
 status = slrBean.getState()
-
+print 'current server status: '+status
 if status != 'SHUTDOWN':
    shutdown('$SERVER_NAME','Server')
 else:
@@ -228,7 +230,7 @@ connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
 domainRuntime()
 slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
 status = slrBean.getState()
-
+print 'current server status: '+status
 if status != 'RUNNING':
    start('$SERVER_NAME','Server')
 else:
@@ -252,7 +254,9 @@ function start_server()
      create_server_start_py_script
      ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/start-server.py')"
 
-     if [ "$ret" == "0" ];
+     retVal=$(getReturnCode "$ret")
+
+     if [ "$retVal" == "0" ];
      then
        echo "Server $SERVER_NAME successfully started"
      else
