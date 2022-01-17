@@ -93,7 +93,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('managedServerPrefix'),copyindex(),'VM','/newuserscript')]",
+            "name": "[concat(parameters('managedServerPrefix'),'VM',copyindex(),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "condition": "[parameters('isClusterDomain')]",
@@ -114,7 +114,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-serverVMName',' ',concat(parameters('managedServerPrefix'),copyindex(),'VM'))]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-serverVMName',' ',concat(parameters('managedServerPrefix'),'VM',copyindex()))]"
                 }
             }
         }
