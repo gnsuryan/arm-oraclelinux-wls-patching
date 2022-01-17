@@ -272,29 +272,34 @@ function start_server()
 #This function to wait for admin server
 function wait_for_admin()
 {
- #wait for admin to start
-count=1
-CHECK_URL="http://$WLS_ADMIN_URL/weblogic/ready"
-status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
-echo "Waiting for admin server to start"
-while [[ "$status" != "200" ]]
-do
-  echo "."
-  count=$((count+1))
-  if [ $count -le 30 ];
-  then
-      sleep 1m
-  else
-     echo "Error : Maximum attempts exceeded while starting admin server"
-     exit 1
-  fi
-  status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
-  if [ "$status" == "200" ];
-  then
-     echo "Admin Server started succesfully..."
-     break
-  fi
-done
+    if [ "$SERVER_VM_NAME" == "adminVM" ];
+    then
+       return
+    fi
+
+     #wait for admin to start
+    count=1
+    CHECK_URL="http://$WLS_ADMIN_URL/weblogic/ready"
+    status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
+    echo "Waiting for admin server to start"
+    while [[ "$status" != "200" ]]
+    do
+      echo "."
+      count=$((count+1))
+      if [ $count -le 30 ];
+      then
+          sleep 1m
+      else
+         echo "Error : Maximum attempts exceeded while starting admin server"
+         exit 1
+      fi
+      status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
+      if [ "$status" == "200" ];
+      then
+         echo "Admin Server started succesfully..."
+         break
+      fi
+    done
 }
 
 
