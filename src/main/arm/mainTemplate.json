@@ -122,6 +122,7 @@
             ],
             "copy": {
                 "name": "ManagedVMExtensionLoop",
+                "mode": "serial",
                 "count": "[parameters('numberOfmanagedServerVMs')]"
             },
             "properties": {
