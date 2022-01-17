@@ -118,7 +118,7 @@
             "location": "[parameters('location')]",
             "condition": "[parameters('isClusterDomain')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions',parameters('adminVMName'),'/newuserscript')]"
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions',concat(parameters('adminVMName'),'/newuserscript'))]"
             ],
             "copy": {
                 "name": "ManagedVMExtensionLoop",
