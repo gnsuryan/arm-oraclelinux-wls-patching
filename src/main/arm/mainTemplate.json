@@ -1,255 +1,127 @@
 {
-   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-   "contentVersion": "1.0.0.0",
-   "parameters": {
-      "_artifactsLocation": {
-         "type": "string",
-         "metadata": {
-            "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-         },
-         "defaultValue": "[deployment().properties.templateLink.uri]"
-      },
-      "_artifactsLocationSasToken": {
-         "type": "securestring",
-         "metadata": {
-            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-         },
-         "defaultValue": ""
-      },
-      "acceptOTNLicenseAgreement": {
-         "type": "string",
-         "metadata": {
-            "description": "Do you agree to provide OTN credentials to accept OTN License Agreement? Enter Y or y to agree, else N or n"
-         }
-      },
-      "adminPasswordOrKey": {
-         "type": "securestring",
-         "metadata": {
-            "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
-         }
-      },
-      "adminUsername": {
-         "type": "string",
-         "metadata": {
-            "description": "User name for the Virtual Machine."
-         }
-      },
-      "adminVMName": {
-         "type": "string",
-         "defaultValue": "adminVM",
-         "metadata": {
-            "description": "Admin Server hosting VM name."
-         }
-      },
-      "authenticationType": {
-         "type": "string",
-         "defaultValue": "password",
-         "allowedValues": [
-            "sshPublicKey",
-            "password"
-         ],
-         "metadata": {
-            "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
-         }
-      },
-      "dnsLabelPrefix": {
-         "defaultValue": "wls",
-         "type": "string",
-         "metadata": {
-            "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-         }
-      },
-      "linuxOSVersion": {
-         "type": "string",
-         "defaultValue": "7.4",
-         "allowedValues": [
-            "7.4",
-            "7.3"
-         ],
-         "metadata": {
-            "description": "The Oracle Linux version for the VM. This will pick a fully patched image of this given Oracle Linux version."
-         }
-      },
-      "location": {
-         "type": "string",
-         "defaultValue": "[resourceGroup().location]",
-         "metadata": {
-            "description": "Location for all resources."
-         }
-      },
-      "otnAccountPassword": {
-         "type": "securestring",
-         "metadata": {
-            "description": "Password for your Oracle Technology Network account"
-         }
-      },
-      "otnAccountUsername": {
-         "type": "string",
-         "metadata": {
-            "description": "Username for your Oracle Technology Network account"
-         }
-      },
-      "portsToExpose": {
-         "type": "string",
-         "defaultValue": "80,443,7001-9000",
-         "metadata": {
-            "description": "Ports and port ranges to expose"
-         }
-      },
-      "vmSizeSelect": {
-         "type": "string",
-         "defaultValue": "Standard_A3",
-         "allowedValues": [
-            "Standard_A1",
-            "Standard_A2",
-            "Standard_A3",
-            "Standard_A4"
-         ],
-         "metadata": {
-            "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4)"
-         }
-      },
-      "wlsDomainName": {
-         "defaultValue": "adminDomain",
-         "type": "string",
-         "metadata": {
-            "description": "Provide Weblogic domain name"
-         }
-      },
-      "wlsPassword": {
-         "type": "securestring",
-         "metadata": {
-            "description": "Password for your Weblogic domain name"
-         }
-      },
-      "wlsUserName": {
-         "type": "string",
-         "metadata": {
-            "description": "Username for your Weblogic domain name"
-         }
-      }
-   },
-   "variables": {
-      "name_adminLinkedTemplateName": "adminTemplate.json"
-   },
-   "resources": [
-      {
-         "apiVersion": "2019-10-01",
-         "name": "admin.start",
-         "type": "Microsoft.Resources/deployments",
-         "properties": {
-            "mode": "Incremental",
-            "template": {
-               "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-               "contentVersion": "1.0.0.0",
-               "resources": [
-               ]
-            }
-         }
-      },
-      {
-         "name": "adminLinkedTemplate",
-         "type": "Microsoft.Resources/deployments",
-         "apiVersion": "2019-10-01",
-         "properties": {
-            "mode": "Incremental",
-            "templateLink": {
-               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_adminLinkedTemplateName')))]",
-               "contentVersion": "1.0.0.0"
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             },
-            "parameters": {
-               "_artifactsLocation": {
-                  "value": "[parameters('_artifactsLocation')]"
-               },
-               "_artifactsLocationSasToken": {
-                  "value": "[parameters('_artifactsLocationSasToken')]"
-               },
-               "acceptOTNLicenseAgreement": {
-                  "value": "[parameters('acceptOTNLicenseAgreement')]"
-               },
-               "adminPasswordOrKey": {
-                  "value": "[parameters('adminPasswordOrKey')]"
-               },
-               "adminUsername": {
-                  "value": "[parameters('adminUsername')]"
-               },
-               "adminVMName": {
-                  "value": "[parameters('adminVMName')]"
-               },
-               "authenticationType": {
-                  "value": "[parameters('authenticationType')]"
-               },
-               "dnsLabelPrefix": {
-                  "value": "[parameters('dnsLabelPrefix')]"
-               },
-               "linuxOSVersion": {
-                  "value": "[parameters('linuxOSVersion')]"
-               },
-               "location": {
-                  "value": "[parameters('location')]"
-               },
-               "otnAccountPassword": {
-                  "value": "[parameters('otnAccountPassword')]"
-               },
-               "otnAccountUsername": {
-                  "value": "[parameters('otnAccountUsername')]"
-               },
-               "portsToExpose": {
-                  "value": "[parameters('portsToExpose')]"
-               },
-               "vmSizeSelect": {
-                  "value": "[parameters('vmSizeSelect')]"
-               },
-               "wlsDomainName": {
-                  "value": "[parameters('wlsDomainName')]"
-               },
-               "wlsPassword": {
-                  "value": "[parameters('wlsPassword')]"
-               },
-               "wlsUserName": {
-                  "value": "[parameters('wlsUserName')]"
-               }
+            "defaultValue": "https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/arm/"
+        },
+        "_artifactsLocationSasToken": {
+            "defaultValue": "",
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
             }
-         }
-      },
-      {
-         "apiVersion": "2019-10-01",
-         "name": "admin.end",
-         "type": "Microsoft.Resources/deployments",
-         "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'adminLinkedTemplate')]"
-         ],
-         "properties": {
-            "mode": "Incremental",
-            "template": {
-               "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-               "contentVersion": "1.0.0.0",
-               "resources": [
-               ]
+        },
+        "adminVMName": {
+            "type": "string",
+            "defaultValue": "adminVM",
+            "metadata": {
+                "description": "Admin Server hosting VM name."
             }
-         }
-      }
-   ],
-   "outputs": {
-      "hostname": {
-         "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.hostname.value]"
-      },
-      "sshCommand": {
-         "type": "string",
-         "value": "[concat('ssh ', parameters('adminUsername'), '@', reference('adminLinkedTemplate','2019-10-01').outputs.hostname.value)]"
-      },
-      "wlsDomainLocation": {
-         "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.wlsDomainLocation.value]"
-      },
-      "adminConsoleURL": {
-         "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.adminConsoleURL.value]"
-      },
-      "adminConsoleSecureURL": {
-         "type": "string",
-         "value": "[reference('adminLinkedTemplate','2019-10-01').outputs.adminConsoleSecureURL.value]"
-      }
-   }
+        },
+        "isClusterDomain": {
+            "type": "boolean",
+            "defaultvalue" : false,
+            "metadata" : {
+                "description": "boolean value indicating if the existing domain is a cluster/dynamic cluster domain or not. If domain has only Admin Server, pass the value as false. For Cluster and Dynamic Cluster Domains, pass the value as true."
+            }
+        },
+        "managedServerPrefix": {
+            "type": "string",
+            "defaultValue": "msp",
+            "metadata": {
+                "description": "Provide managed server prefix names"
+            }
+        },
+        "numberOfmanagedServerVMs": {
+            "defaultValue": 3,
+            "type": "int",
+            "metadata": {
+                "description": "Number of managed Server VMs on which to apply the patch"
+            }
+        },        
+        "location": {
+            "type": "string",
+            "default":"[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "wls_patch_file": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the WebLogic Patch File which is already uploaded in to the Storage Account"
+            }
+        },
+        "wls_patch_timestamp": {
+            "type": "string",
+            "defaultValue": "[utcNow('yyMMddHHmm')]",
+            "metadata": {
+                "description": "Timestamp required for uniquely identifying and executing custom extension script for WebLogic Patching"
+            }
+        }
+    },
+    "variables": {
+        "name_scriptFile": "installPatch.sh"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                      "skipDos2Unix":false,
+                      "timestamp": "[int(parameters('wls_patch_timestamp'))]",
+                      "fileUris": [
+                            "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
+                      ]
+                },
+                "protectedSettings": {
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-serverVMName',' ',parameters('adminVMName'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('managedServerPrefix'),copyindex(),'/newuserscript')]",
+            "apiVersion": "2019-07-01",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "ManagedVMExtensionLoop",
+                "count": "[parameters('numberOfmanagedServerVMs')]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                      "skipDos2Unix":false,
+                      "timestamp": "[int(parameters('wls_patch_timestamp'))]",
+                      "fileUris": [
+                            "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
+                      ]
+                },
+                "protectedSettings": {
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-serverVMName',' ',concat(parameters('managedServerPrefix'),copyindex(),'VM'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "artifactsLocationPassedIn": {
+            "type": "string",
+            "value": "[parameters('_artifactsLocation')]"
+        }
+    }
 }

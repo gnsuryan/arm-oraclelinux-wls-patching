@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"_artifactsLocation": {
+			"value": "GEN-UNIQUE"
+		},
+        "adminVMName" : {
+            "value" : "GEN-UNIQUE"
+        },
+        "isClusterDomain": {
+            "value" : false
+        },
+        "managedServerPrefix": {
+            "value" : "GEN-UNIQUE"
+        },
+        "numberOfmanagedServerVMs": {
+            "value": 0,
+        },
+        "location": {
+            "value": "GEN-UNIQUE"
+        },
+		"wls_patch_file": {
+			"value": "GEN-UNIQUE"
+		}
+	}
+}
