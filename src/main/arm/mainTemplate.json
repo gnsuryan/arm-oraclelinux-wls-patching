@@ -59,7 +59,7 @@
         },
         "wls_patch_timestamp": {
             "type": "string",
-            "defaultValue": "[utcNow('yyMMddHHmm')]",
+            "defaultValue": "[utcNow('MMddyyHHmm')]",
             "metadata": {
                 "description": "Timestamp required for uniquely identifying and executing custom extension script for WebLogic Patching"
             }
@@ -72,7 +72,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
-            "apiVersion": "2019-07-01",
+            "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -94,7 +94,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('managedServerPrefix'),copyindex(),'VM','/newuserscript')]",
-            "apiVersion": "2019-07-01",
+            "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
             "condition": "[parameters('isClusterDomain')]",
             "copy": {
