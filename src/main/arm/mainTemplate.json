@@ -93,10 +93,10 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('managedServerPrefix'),copyindex(),'/newuserscript')]",
+            "name": "[concat(parameters('managedServerPrefix'),copyindex(),'VM','/newuserscript')]",
             "apiVersion": "2019-07-01",
             "location": "[parameters('location')]",
-            "condition": "[if(parameters('isClusterDomain'))]",
+            "condition": "[parameters('isClusterDomain')]",
             "copy": {
                 "name": "ManagedVMExtensionLoop",
                 "count": "[parameters('numberOfmanagedServerVMs')]"

@@ -5,6 +5,7 @@ function usage()
 cat << USAGE >&2
 Usage:
     -patchFile          PATCH_FILE      WebLogic Patch File
+    -serverVMName       SERVER_VM_NAME  Server VM Name
     -h|?|--help         HELP            Help/Usage info
 USAGE
 
