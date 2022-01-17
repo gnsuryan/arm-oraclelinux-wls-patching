@@ -23,6 +23,25 @@
                 "description": "Admin Server hosting VM name."
             }
         },
+        "wlsUserName": {
+            "defaultValue": "weblogic",
+            "type": "string",
+            "metadata": {
+                "description": "Username for your Weblogic domain name"
+            }
+        },
+        "wlsPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for your Weblogic domain name"
+            }
+        },
+        "wlsAdminURL": {
+            "type": "string",
+            "metadata": {
+                "description": "WebLogic Server Admin Console URL"
+            }
+        },
         "isClusterDomain": {
             "type": "bool",
             "defaultvalue" : false,
@@ -66,7 +85,8 @@
         }
     },
     "variables": {
-        "name_scriptFile": "installPatch.sh"
+        "name_scriptFile": "installPatch.sh",
+        "name_adminServer": "adminVM"
     },
     "resources": [
         {
@@ -87,7 +107,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-serverVMName',' ',parameters('adminVMName'))]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('adminVMName'),' ',variables('name_adminServer'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'))]"
                 }
             }
         },
@@ -114,7 +134,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ','-patchFile',' ',parameters('wls_patch_file'),' ','-serverVMName',' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)))]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'))]"
                 }
             }
         }

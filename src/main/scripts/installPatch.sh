@@ -1,32 +1,5 @@
 #!/bin/bash
 
-function usage()
-{
-cat << USAGE >&2
-Usage:
-    -patchFile          PATCH_FILE      WebLogic Patch File
-    -serverVMName       SERVER_VM_NAME  Server VM Name
-    -h|?|--help         HELP            Help/Usage info
-USAGE
-
-exit 1
-}
-
-function get_param()
-{
-    while [ "$1" ]
-    do
-        case "$1" in    
-         -h |?|--help )        usage ;;
-         -patchFile   )        PATCH_FILE=$2 ;;
-         -serverVMName  )      SERVER_VM_NAME=$2 ;;
-                     *)        echo 'invalid arguments specified'
-                               usage;;
-        esac
-        shift 2
-    done
-}
-
 function validate_input()
 {
     
@@ -46,6 +19,34 @@ function validate_input()
     if [ -z "${SERVER_VM_NAME}" ];
     then
         echo "Server VM Name not provided."
+        usage
+        exit 1
+    fi
+
+    if [ -z "${SERVER_NAME}" ];
+    then
+        echo "Server Name not provided."
+        usage
+        exit 1
+    fi
+
+    if [ -z "${WLS_USERNAME}" ];
+    then
+        echo "WLS Username not provided."
+        usage
+        exit 1
+    fi
+
+    if [ -z "${WLS_PASSWORD}" ];
+    then
+        echo "WLS Password not provided."
+        usage
+        exit 1
+    fi
+
+    if [ -z "${WLS_ADMIN_URL}" ];
+    then
+        echo "Admin URL not provided."
         usage
         exit 1
     fi
@@ -189,15 +190,45 @@ function shutdown_server()
   else
      systemctl stop wls_nodemanager.service
      systemctl status wls_nodemanager.service
+     create_server_shutdown_py_script
+     ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/shutdown-server.py')"
+
+     if [ $ret == 0 ];
+     then
+       echo "Server $SERVER_NAME successfully shutdown"
+     else
+       echo "Server $SERVER_NAME shutdown failed !!"
+       exit 1
+     fi
   fi
 
   echo "weblogic server services shutdown complete on VM $SERVER_VM_NAME"
 
 }
 
-function restart_server()
+function create_server_shutdown_py_script()
 {
-  echo "Restarting weblogic server services on VM $SERVER_VM_NAME"
+    echo "Creating server shutdown script for server $wlsServerName"
+    cat <<EOF >$DOMAIN_PATH/server-shutdown.py
+connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
+shutdown('$SERVER_NAME','Server')
+disconnect()
+EOF
+}
+
+function create_server_start_py_script()
+{
+    echo "Creating server start script for server $wlsServerName"
+    cat <<EOF >$DOMAIN_PATH/server-start.py
+connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
+start('$SERVER_NAME','Server')
+disconnect()
+EOF
+}
+
+function start_server()
+{
+  echo "Starting weblogic server services on VM $SERVER_VM_NAME"
 
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
@@ -206,10 +237,47 @@ function restart_server()
   else
      systemctl start wls_nodemanager.service
      systemctl status wls_nodemanager.service
+     create_server_start_py_script
+     ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/start-server.py')"
+
+     if [ $ret == 0 ];
+     then
+       echo "Server $SERVER_NAME successfully started"
+     else
+       echo "Server $SERVER_NAME start failed !!"
+       exit 1
+     fi
   fi
 
-  echo "weblogic server services restart complete on VM $SERVER_VM_NAME"
+  echo "weblogic server services start complete on VM $SERVER_VM_NAME"
 
+}
+
+function acquireLockAndExecute()
+{
+    echo "$$ trying to acquire lock"
+    {
+        flock -e 42
+        echo "lock acquired by $$"
+
+        setup_patch
+
+        copy_patch
+
+        getPatchNumber
+
+        check_opatch
+
+        shutdown_server
+
+        install_patch
+
+        verify_patch
+
+        start_server
+
+    } 42> ${WLS_FILE_SHARE}/file.lock
+    echo "lock released by $$"
 }
 
 
@@ -217,24 +285,11 @@ function restart_server()
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_HOME_DIR="/u01/app/wls/patches"
-WLS_PATCH_FILE_SHARE_MOUNT="/mnt/wlsshare/patches"
+WLS_FILE_SHARE="/mnt/wlsshare"
+WLS_PATCH_FILE_SHARE_MOUNT="${WLS_FILE_SHARE}/patches"
 
-get_param "$@"
+read PATCH_FILE SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
 validate_input "$@"
 
-setup_patch
-
-copy_patch
-
-getPatchNumber
-
-check_opatch
-
-shutdown_server
-
-install_patch
-
-verify_patch
-
-restart_server
+acquireLockAndExecute

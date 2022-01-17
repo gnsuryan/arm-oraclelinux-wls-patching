@@ -8,6 +8,12 @@
         "adminVMName" : {
             "value" : "GEN-UNIQUE"
         },
+        "wlsUserName": {
+            "value" : "GEN-UNIQUE"
+        },
+        "wlsPassword": {
+            "value" : "GEN-UNIQUE"
+        },
         "isClusterDomain": {
             "value" : false
         },
