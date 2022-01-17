@@ -189,7 +189,7 @@ function shutdown_server()
      create_server_shutdown_py_script
      ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/shutdown-server.py')"
 
-     if [ $ret == 0 ];
+     if [ "$ret" == "0" ];
      then
        echo "Server $SERVER_NAME successfully shutdown"
      else
@@ -204,20 +204,36 @@ function shutdown_server()
 
 function create_server_shutdown_py_script()
 {
-    echo "Creating server shutdown script for server $wlsServerName"
+    echo "Creating server shutdown script for server $SERVER_NAME"
     cat <<EOF >$DOMAIN_PATH/server-shutdown.py
 connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
-shutdown('$SERVER_NAME','Server')
+domainRuntime()
+slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
+status = slrBean.getState()
+
+if status != 'SHUTDOWN':
+   shutdown('$SERVER_NAME','Server')
+else:
+   print 'Server $SERVER_NAME already shutdown'
+
 disconnect()
 EOF
 }
 
 function create_server_start_py_script()
 {
-    echo "Creating server start script for server $wlsServerName"
+    echo "Creating server start script for server $SERVER_NAME"
     cat <<EOF >$DOMAIN_PATH/server-start.py
 connect('$WLS_USERNAME','$WLS_PASSWORD','$WLS_ADMIN_URL')
-start('$SERVER_NAME','Server')
+domainRuntime()
+slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
+status = slrBean.getState()
+
+if status != 'RUNNING':
+   start('$SERVER_NAME','Server')
+else:
+   print 'Server $SERVER_NAME already running'
+
 disconnect()
 EOF
 }
@@ -236,7 +252,7 @@ function start_server()
      create_server_start_py_script
      ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/start-server.py')"
 
-     if [ $ret == 0 ];
+     if [ "$ret" == "0" ];
      then
        echo "Server $SERVER_NAME successfully started"
      else
