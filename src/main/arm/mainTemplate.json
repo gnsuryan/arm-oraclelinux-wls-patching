@@ -93,7 +93,7 @@
     },
     "variables": {
         "name_scriptFile": "installPatch.sh",
-        "name_rollingrestart_scriptFile": "rollingRestart.sh"
+        "name_rollingrestart_scriptFile": "rollingRestart.sh",
         "name_adminServer": "adminVM"
     },
     "resources": [
