@@ -17,6 +17,8 @@ function validate_input()
         exit 1
     fi
 
+
+
     if [ -z "${SERVER_NAME}" ];
     then
         echo "Server Name not provided."
@@ -300,7 +302,6 @@ function wait_for_admin()
     done
 }
 
-
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -325,13 +326,7 @@ check_opatch
 
 wait_for_admin
 
-shutdown_server
-
 install_patch
 
 verify_patch
-
-wait_for_admin
-
-start_server
 

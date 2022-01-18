@@ -23,6 +23,13 @@
                 "description": "Admin Server hosting VM name."
             }
         },
+        "wlsDomainName": {
+            "defaultValue": "wlsd",
+            "type": "string",
+            "metadata": {
+                "description": "Weblogic domain name"
+            }
+        },
         "wlsUserName": {
             "defaultValue": "weblogic",
             "type": "string",
@@ -86,6 +93,7 @@
     },
     "variables": {
         "name_scriptFile": "installPatch.sh",
+        "name_rollingrestart_scriptFile": "rollingRestart.sh"
         "name_adminServer": "adminVM"
     },
     "resources": [
@@ -141,7 +149,35 @@
                       "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
+            "apiVersion": "2020-06-01",
+            "location": "[parameters('location')]",
+            "condition": "[parameters('isClusterDomain')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]",
+                "ManagedVMExtensionLoop"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                      "skipDos2Unix":false,
+                      "timestamp": "[int(parameters('wls_patch_timestamp'))]",
+                      "fileUris": [
+                            "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_rollingrestart_scriptFile'), parameters('_artifactsLocationSasToken')))]"
+                      ]
+                },
+                "protectedSettings": {
+                      "commandToExecute": "[concat('sh',' ',variables('name_rollingrestart_scriptFile'),' <<< \"',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                }
+            }
         }
+
     ],
     "outputs": {
         "artifactsLocationPassedIn": {
