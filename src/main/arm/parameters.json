@@ -11,9 +11,6 @@
         "wlsAdminURL": {
             "value" : "GEN-UNIQUE"
         },
-        "wlsDomainName": {
-            "value" : "GEN-UNIQUE"
-        },
         "wlsUserName": {
             "value" : "GEN-UNIQUE"
         },

@@ -10,13 +10,6 @@ function validate_input()
         exit 1
     fi
 
-    if [ -z "${DOMAIN_NAME}" ];
-    then
-        echo "Domain Name not provided."
-        usage
-        exit 1
-    fi
-
     if [ -z "${SERVER_VM_NAME}" ];
     then
         echo "Server VM Name not provided."
@@ -182,14 +175,36 @@ function verify_patch()
     fi
 }
 
-function shutdown_server()
+function start_coherence_server()
 {
-  echo "shutting down weblogic server services on VM $SERVER_VM_NAME"
+  echo "Starting weblogic coherence server on VM $SERVER_VM_NAME"
 
-  if [ "$SERVER_VM_NAME" == "adminVM" ];
+  if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
   then
-     systemctl stop wls_admin.service
-     systemctl status wls_admin.service
+     return
+  else
+     systemctl start wls_nodemanager.service
+     systemctl status wls_nodemanager.service
+     create_server_start_py_script
+     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/shutdown-server.py"
+
+     if [ "$?" == "0" ];
+     then
+       echo "Coherence Server $SERVER_NAME successfully shutdown"
+     else
+       echo "Coherence Server $SERVER_NAME shutdown failed !!"
+       exit 1
+     fi
+  fi
+}
+
+function shutdown_coherence_server()
+{
+  echo "Shutting down weblogic coherence server on VM $SERVER_VM_NAME"
+
+  if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
+  then
+     return
   else
      systemctl stop wls_nodemanager.service
      systemctl status wls_nodemanager.service
@@ -198,15 +213,12 @@ function shutdown_server()
 
      if [ "$?" == "0" ];
      then
-       echo "Server $SERVER_NAME successfully shutdown"
+       echo "Coherence Server $SERVER_NAME successfully shutdown"
      else
-       echo "Server $SERVER_NAME shutdown failed !!"
+       echo "Coherence Server $SERVER_NAME shutdown failed !!"
        exit 1
      fi
   fi
-
-  echo "weblogic server services shutdown complete on VM $SERVER_VM_NAME"
-
 }
 
 function create_server_shutdown_py_script()
@@ -247,7 +259,23 @@ EOF
      sudo chown -R $username:$groupname ${DOMAIN_PATH}
 }
 
-function start_server()
+function shutdown_wls_service()
+{
+  echo "Shutdown weblogic server services on VM $SERVER_VM_NAME"
+
+  if [ "$SERVER_VM_NAME" == "adminVM" ];
+  then
+     systemctl stop wls_admin.service
+     systemctl status wls_admin.service
+  else
+     systemctl stop wls_nodemanager.service
+     systemctl status wls_nodemanager.service
+  fi
+
+  echo "weblogic server services shutdown complete on VM $SERVER_VM_NAME"
+}
+
+function start_wls_service()
 {
   echo "Starting weblogic server services on VM $SERVER_VM_NAME"
 
@@ -258,16 +286,6 @@ function start_server()
   else
      systemctl start wls_nodemanager.service
      systemctl status wls_nodemanager.service
-     create_server_start_py_script
-     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/start-server.py"
-
-     if [ "$?" == "0" ];
-     then
-       echo "Server $SERVER_NAME successfully started"
-     else
-       echo "Server $SERVER_NAME start failed !!"
-       exit 1
-     fi
   fi
 
   echo "weblogic server services start complete on VM $SERVER_VM_NAME"
@@ -326,7 +344,7 @@ from java.text import SimpleDateFormat
 
 try:
    connect('$WLS_USERNAME', '$WLS_PASSWORD', 't3://$WLS_ADMIN_URL')
-   progress = rollingRestart('${DOMAIN_NAME}', options='isDryRun=false,shutdownTimeout=60,isAutoRevertOnFailure=true')
+   progress = rollingRestart('${CLUSTER_NAME}')
    lastProgressString = ""
 
    progressString=progress.getProgressString()
@@ -381,13 +399,13 @@ exit()
 EOF
 
     sudo chown -R $username:$groupname $DOMAIN_PATH
-    echo "Adding managed server $wlsServerName"
-    runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST $DOMAIN_PATH/roling-restart.py"
+    echo "Performing rolling restart for Cluster $CLUSTER_NAME"
+    runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; java weblogic.WLST $DOMAIN_PATH/roling-restart.py"
     if [[ $? != 0 ]]; then
-         echo "Error : Rolling Restart for Domain $DOMAIN_NAME failed"
+         echo "Error : Rolling Restart for Cluster $CLUSTER_NAME failed"
          exit 1
     else
-         echo "Rolling Restart completed for Domain $DOMAIN_NAME"
+         echo "Rolling Restart completed for Cluster $CLUSTER_NAME"
     fi
 }
 
@@ -401,8 +419,9 @@ WLS_PATCH_FILE_SHARE_MOUNT="${WLS_FILE_SHARE}/patches"
 DOMAIN_PATH="/u01/domains"
 username="oracle"
 groupname="oracle"
+CLUSTER_NAME="cluster1"
 
-read PATCH_FILE DOMAIN_NAME SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
+read PATCH_FILE SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
 validate_input
 
@@ -420,4 +439,13 @@ install_patch
 
 verify_patch
 
+shutdown_wls_service
+
+start_wls_service
+
 rollingRestart
+
+shutdown_coherence_server
+
+start_coherence_server
+
