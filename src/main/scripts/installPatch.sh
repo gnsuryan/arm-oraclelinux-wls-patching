@@ -303,38 +303,6 @@ function wait_for_admin()
 }
 
 
-function acquireLockAndExecute()
-{
-    echo "$$ trying to acquire lock"
-    {
-        flock -e 42
-        echo "lock acquired by $$"
-
-        setup_patch
-
-        copy_patch
-
-        getPatchNumber
-
-        check_opatch
-
-        wait_for_admin
-
-        shutdown_server
-
-        install_patch
-
-        verify_patch
-
-        wait_for_admin
-
-        start_server
-
-    } 42> ${WLS_FILE_SHARE}/file.lock
-    echo "lock released by $$"
-}
-
-
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -347,4 +315,23 @@ read PATCH_FILE SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_U
 
 validate_input
 
-acquireLockAndExecute
+setup_patch
+
+copy_patch
+
+getPatchNumber
+
+check_opatch
+
+wait_for_admin
+
+shutdown_server
+
+install_patch
+
+verify_patch
+
+wait_for_admin
+
+start_server
+
