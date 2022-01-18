@@ -400,7 +400,7 @@ EOF
 
     sudo chown -R $username:$groupname $DOMAIN_PATH
     echo "Performing rolling restart for Cluster $CLUSTER_NAME"
-    runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; java weblogic.WLST $DOMAIN_PATH/roling-restart.py"
+    runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/roling-restart.py"
     if [[ $? != 0 ]]; then
          echo "Error : Rolling Restart for Cluster $CLUSTER_NAME failed"
          exit 1
@@ -442,6 +442,8 @@ verify_patch
 shutdown_wls_service
 
 start_wls_service
+
+wait_for_admin
 
 rollingRestart
 
