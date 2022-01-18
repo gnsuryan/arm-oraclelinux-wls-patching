@@ -98,7 +98,7 @@ function cleanup_patch()
         rm -rf ${PATCH_HOME_DIR}/*
     fi
 
-    rm -rf $DOMAIN_PATH/*.py
+    rm -rf ${DOMAIN_PATH}/*.py
 
 
 }
@@ -220,6 +220,7 @@ else:
 
 disconnect()
 EOF
+     sudo chown -R $username:$groupname ${DOMAIN_PATH}
 }
 
 function create_server_start_py_script()
@@ -238,6 +239,7 @@ else:
 
 disconnect()
 EOF
+     sudo chown -R $username:$groupname ${DOMAIN_PATH}
 }
 
 function start_server()
@@ -252,7 +254,7 @@ function start_server()
      systemctl start wls_nodemanager.service
      systemctl status wls_nodemanager.service
      create_server_start_py_script
-     ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/start-server.py')"
+     ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/start-server.py')"
 
      retVal=$(getReturnCode "$ret")
 
@@ -310,6 +312,8 @@ PATCH_HOME_DIR="/u01/app/wls/patches"
 WLS_FILE_SHARE="/mnt/wlsshare"
 WLS_PATCH_FILE_SHARE_MOUNT="${WLS_FILE_SHARE}/patches"
 DOMAIN_PATH="/u01/domains"
+username="oracle"
+groupname="oracle"
 
 read PATCH_FILE SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
