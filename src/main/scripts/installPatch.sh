@@ -2,6 +2,12 @@
 
 function validate_input()
 {
+    if [ -z "${IS_CLUSTER_DOMAIN}" ];
+    then
+        echo "IS_CLUSTER_DOMAIN Flag not provided"
+        usage
+        exit 1
+    fi
     
     if [ -z "${PATCH_FILE}" ];
     then
@@ -177,12 +183,11 @@ function verify_patch()
 
 function start_coherence_server()
 {
-  echo "Starting weblogic coherence server on VM $SERVER_VM_NAME"
-
   if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
   then
      return
   else
+     echo "Starting weblogic coherence server on VM $SERVER_VM_NAME"
      systemctl start wls_nodemanager.service
      systemctl status wls_nodemanager.service
      create_server_start_py_script
@@ -200,12 +205,11 @@ function start_coherence_server()
 
 function shutdown_coherence_server()
 {
-  echo "Shutting down weblogic coherence server on VM $SERVER_VM_NAME"
-
   if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
   then
      return
   else
+     echo "Shutting down weblogic coherence server on VM $SERVER_VM_NAME"
      systemctl stop wls_nodemanager.service
      systemctl status wls_nodemanager.service
      create_server_shutdown_py_script
@@ -329,6 +333,11 @@ function rollingRestart()
        return
     fi
 
+    if [ "${IS_CLUSTER_DOMAIN}" != "true" ];
+    then
+       return
+    fi
+
     echo "Creating rolling restart script for Domain"
     cat <<EOF >${DOMAIN_PATH}/rolling-restart.py
 
@@ -417,7 +426,9 @@ username="oracle"
 groupname="oracle"
 CLUSTER_NAME="cluster1"
 
-read PATCH_FILE SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
+read PATCH_FILE IS_CLUSTER_DOMAIN SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
+
+IS_CLUSTER_DOMAIN="${IS_CLUSTER_DOMAIN,,}"
 
 validate_input
 
