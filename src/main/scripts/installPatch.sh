@@ -187,11 +187,9 @@ function shutdown_server()
      systemctl stop wls_nodemanager.service
      systemctl status wls_nodemanager.service
      create_server_shutdown_py_script
-     ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/shutdown-server.py')"
+     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/shutdown-server.py"
 
-     retVal=$(getReturnCode "$ret")
-
-     if [ "$retVal" == "0" ];
+     if [ "$?" == "0" ];
      then
        echo "Server $SERVER_NAME successfully shutdown"
      else
@@ -207,7 +205,7 @@ function shutdown_server()
 function create_server_shutdown_py_script()
 {
     echo "Creating server shutdown script for server $SERVER_NAME"
-    cat <<EOF > ${DOMAIN_PATH}/shutdown-server.py
+    cat <<EOF >${DOMAIN_PATH}/shutdown-server.py
 connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
 domainRuntime()
 slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
@@ -226,7 +224,7 @@ EOF
 function create_server_start_py_script()
 {
     echo "Creating server start script for server $SERVER_NAME"
-    cat <<EOF > ${DOMAIN_PATH}/start-server.py
+    cat <<EOF >${DOMAIN_PATH}/start-server.py
 connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
 domainRuntime()
 slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
@@ -254,11 +252,9 @@ function start_server()
      systemctl start wls_nodemanager.service
      systemctl status wls_nodemanager.service
      create_server_start_py_script
-     ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/start-server.py')"
+     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/start-server.py"
 
-     retVal=$(getReturnCode "$ret")
-
-     if [ "$retVal" == "0" ];
+     if [ "$?" == "0" ];
      then
        echo "Server $SERVER_NAME successfully started"
      else
