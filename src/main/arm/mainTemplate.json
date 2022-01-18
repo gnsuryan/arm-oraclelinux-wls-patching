@@ -105,7 +105,6 @@
             "condition": "[parameters('isClusterDomain')]",
             "copy": {
                 "name": "ManagedVMExtensionLoop",
-                "mode": "serial",
                 "count": "[parameters('numberOfmanagedServerVMs')]"
             },
             "properties": {
@@ -133,7 +132,6 @@
             "condition": "[parameters('isClusterDomain')]",
             "copy": {
                 "name": "CoherenceVMExtensionLoop",
-                "mode": "serial",
                 "count": "[parameters('numberOfCoherenceServerVMs')]"
             },
             "properties": {

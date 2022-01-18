@@ -295,12 +295,8 @@ function start_wls_service()
 #This function to wait for admin server
 function wait_for_admin()
 {
-    if [ "$SERVER_VM_NAME" == "adminVM" ];
-    then
-       return
-    fi
 
-     #wait for admin to start
+    #wait for admin to start
     count=1
     CHECK_URL="http://$WLS_ADMIN_URL/weblogic/ready"
     status=`curl --insecure -ILs $CHECK_URL | tac | grep -m1 HTTP/1.1 | awk {'print $2'}`
@@ -400,7 +396,7 @@ EOF
 
     sudo chown -R $username:$groupname $DOMAIN_PATH
     echo "Performing rolling restart for Cluster $CLUSTER_NAME"
-    runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/roling-restart.py"
+    runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/rolling-restart.py"
     if [[ $? != 0 ]]; then
          echo "Error : Rolling Restart for Cluster $CLUSTER_NAME failed"
          exit 1
