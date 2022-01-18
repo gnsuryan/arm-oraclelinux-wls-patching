@@ -102,7 +102,7 @@ function cleanup_patch()
 
 
 }
-#trap cleanup_patch EXIT
+trap cleanup_patch EXIT
 
 
 function check_opatch()
