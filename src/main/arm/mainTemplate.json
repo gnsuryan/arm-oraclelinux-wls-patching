@@ -63,7 +63,7 @@
                 "description": "Number of managed Server VMs on which to apply the patch"
             }
         },
-        numberOfCoherenceServerVMs": {
+        "numberOfCoherenceServerVMs": {
             "defaultValue": 1,
             "type": "int",
             "metadata": {
