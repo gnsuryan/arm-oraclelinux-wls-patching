@@ -6,7 +6,6 @@ function usage()
 cat << USAGE >&2
 Usage:
     -resourceGroupName     RESOURCE_GROUP_NAME    Resource Group Name
-    -storageAccountName    STORAGE_ACCOUNT_NAME   Account Storage Name
     -localFilePath         LOCAL_FILE_PATH        Path of Local File to Upload
     -h|?|--help            HELP                   Help/Usage info
 USAGE
@@ -21,7 +20,6 @@ function get_param()
         case "$1" in    
               -h |?|--help )        usage ;;
         -resourceGroupName )        RESOURCE_GROUP_NAME=$2 ;;
-       -storageAccountName )        STORAGE_ACCOUNT_NAME=$2 ;;
             -localFilePath )        LOCAL_FILE_PATH=$2 ;;
                           *)        echo 'invalid arguments specified'
                                     usage;;
@@ -41,11 +39,16 @@ function validate_input()
        exit 1
     fi
 
-    if [[ $# -ne 6 ]];
+    if [[ $# -ne 4 ]];
     then
         usage
     fi
 
+}
+
+function get_storage_account()
+{
+  STORAGE_ACCOUNT_NAME=$(az storage account list --resource-group "${RESOURCE_GROUP_NAME}" --query '[0].name' | tr -d '"')
 }
 
 function get_storage_account_key()
@@ -130,6 +133,8 @@ WLS_FILE_SHARE_MOUNT="/mnt/${AZURE_WLS_FILE_SHARE}"
 validate_input "$@"
 
 get_param "$@"
+
+get_storage_account
 
 get_storage_account_key
 
