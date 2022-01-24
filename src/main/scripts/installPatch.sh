@@ -127,12 +127,6 @@ function check_opatch()
    fi
 }
 
-function getPatchNumber()
-{
-    PATCH_NUMBER=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch query --all ${PATCH_HOME_DIR}/${PATCH_FILE} |grep '<ONEOFF'|grep 'REF_ID'|cut -d'\"' -f2")
-    echo "PATCH_NUMBER: ${PATCH_NUMBER}"
-}
-
 function install_patch()
 {
     unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
@@ -142,43 +136,32 @@ function install_patch()
 
     echo "JAVA_HOME: $JAVA_HOME"
 
-    PATCH_NUMBER=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch query --all ${PATCH_HOME_DIR}/${PATCH_FILE} |grep '<ONEOFF'|grep 'REF_ID'|cut -d'\"' -f2")
-
-    echo "PATCH_NUMBER: $PATCH_NUMBER"
-
-    patchApplyCommand="cd /u01/app/wls/install/oracle/middleware/oracle_home/OPatch && ./opatch apply -silent -jre ${JAVA_HOME}/jre  ${PATCH_HOME_DIR}/$PATCH_NUMBER"
-
-    echo "Applying Patch... using command: $patchApplyCommand"
-    ret=$(runCommandAsOracleUser "$patchApplyCommand")
-    echo "$ret"
+    cd ${PATCH_HOME_DIR}/*
     
+	patchListFile=`find . -name linux64_patchlist.txt`
+	if [[ "${patchListFile}" == *"linux64_patchlist.txt"* ]];
+	then
+		echo "Applying WebLogic Stack Patch Bundle"
+		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent -oh /u01/app/wls/install/oracle/middleware/oracle_home  -phBaseFile linux64_patchlist.txt"
+		echo $command
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/*/binary_patches ; ${command}")
+	else
+		echo "Applying regular WebLogic patch"
+		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch apply -silent"
+		echo $command
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
+	fi
+
     retVal=$(getReturnCode "$ret")
-
-   if [[ "$retVal" != "0" ]];
-   then
-     echo "opatch command failed. Please set WebLogic Classpath appropriately and try again"
-     exit 1
-   else
-     echo "opatch command verified successfully."
-   fi
-
-}
-
-function verify_patch()
-{
-    echo "Listing all Patches to see if it contains existing patch"
     
-    ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory -jdk ${JAVA_HOME}')"
-    echo "$ret"
-    retVal=$(echo "$ret"|grep "Patch  ${PATCH_NUMBER}")
-
-    if [ "$?" == "0" ];
+    if [[ "$retVal" != "0" ]];
     then
-      echo "PATCH INSTALL: SUCCESS"
+        echo "opatch command failed. Please set WebLogic Classpath appropriately and try again"
+        exit 1
     else
-      echo "PATCH INSTALL: FAILED"
-      exit 1
+        echo "opatch command applied successfully."
     fi
+
 }
 
 function start_coherence_server()
@@ -436,15 +419,11 @@ setup_patch
 
 copy_patch
 
-getPatchNumber
-
 check_opatch
 
 wait_for_admin
 
 install_patch
-
-verify_patch
 
 shutdown_wls_service
 
