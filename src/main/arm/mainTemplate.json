@@ -99,6 +99,33 @@
     "resources": [
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
+            "apiVersion": "2020-06-01",
+            "location": "[parameters('location')]",
+            "condition": "[parameters('isClusterDomain')]",
+            "copy": {
+                "name": "CoherenceVMExtensionLoop",
+                "count": "[parameters('numberOfCoherenceServerVMs')]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                      "skipDos2Unix":false,
+                      "timestamp": "[int(parameters('wls_patch_timestamp'))]",
+                      "fileUris": [
+                            "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
+                      ]
+                },
+                "protectedSettings": {
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('managedServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
@@ -107,6 +134,7 @@
                 "name": "ManagedVMExtensionLoop",
                 "count": "[parameters('numberOfmanagedServerVMs')]"
             },
+            "dependsOn": [ "CoherenceVMExtensionLoop"  ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
@@ -129,7 +157,7 @@
             "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "dependsOn": [ "ManagedVMExtensionLoop"],
+            "dependsOn": [ "CoherenceVMExtensionLoop", "ManagedVMExtensionLoop"],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
                 "type": "CustomScript",
@@ -144,36 +172,6 @@
                 },
                 "protectedSettings": {
                       "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',parameters('adminVMName'),' ',variables('name_adminServer'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
-            "apiVersion": "2020-06-01",
-            "location": "[parameters('location')]",
-            "condition": "[parameters('isClusterDomain')]",
-            "dependsOn": [ "ManagedVMExtensionLoop",
-                         "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"
-            ],
-            "copy": {
-                "name": "CoherenceVMExtensionLoop",
-                "count": "[parameters('numberOfCoherenceServerVMs')]"
-            },
-            "properties": {
-                "publisher": "Microsoft.Azure.Extensions",
-                "type": "CustomScript",
-                "typeHandlerVersion": "2.1",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                      "skipDos2Unix":false,
-                      "timestamp": "[int(parameters('wls_patch_timestamp'))]",
-                      "fileUris": [
-                            "[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
-                      ]
-                },
-                "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         }
