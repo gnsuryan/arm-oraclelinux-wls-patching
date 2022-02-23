@@ -432,9 +432,9 @@ start_wls_service
 
 wait_for_admin
 
-rollingRestart
+#rollingRestart
 
-shutdown_coherence_server
+#shutdown_coherence_server
 
-start_coherence_server
+#start_coherence_server
 
