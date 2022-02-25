@@ -145,15 +145,16 @@ function install_patch()
 		echo "Applying WebLogic Stack Patch Bundle"
 		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent -oh /u01/app/wls/install/oracle/middleware/oracle_home  -phBaseFile linux64_patchlist.txt"
 		echo $command
-		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/*/binary_patches ; ${command}")
+		#ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/*/binary_patches ; ${command}")
 	else
 		echo "Applying regular WebLogic patch"
 		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch apply -silent"
 		echo $command
-		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
+		#ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
 	fi
 
-    retVal=$(getReturnCode "$ret")
+    #retVal=$(getReturnCode "$ret")
+    retVal=0
     
     if [[ "$retVal" != "0" ]];
     then
@@ -309,7 +310,7 @@ function wait_for_admin()
     done
 }
 
-function rollingRestart()
+function performRollingRestartForManagedServers()
 {
 
     if [ "$SERVER_VM_NAME" != "adminVM" ];
@@ -398,6 +399,12 @@ EOF
     fi
 }
 
+function restart_coherence_server()
+{
+   start_coherence_server
+   shutdown_coherence_server
+}
+
 
 #main
 
@@ -432,9 +439,7 @@ start_wls_service
 
 wait_for_admin
 
-#rollingRestart
+performRollingRestartForManagedServers
 
-#shutdown_coherence_server
-
-#start_coherence_server
+restart_coherence_server
 
