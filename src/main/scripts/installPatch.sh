@@ -145,16 +145,15 @@ function install_patch()
 		echo "Applying WebLogic Stack Patch Bundle"
 		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent -oh /u01/app/wls/install/oracle/middleware/oracle_home  -phBaseFile linux64_patchlist.txt"
 		echo $command
-		#ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/*/binary_patches ; ${command}")
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/*/binary_patches ; ${command}")
 	else
 		echo "Applying regular WebLogic patch"
 		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch apply -silent"
 		echo $command
-		#ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
 	fi
 
-    #retVal=$(getReturnCode "$ret")
-    retVal=0
+    retVal=$(getReturnCode "$ret")
     
     if [[ "$retVal" != "0" ]];
     then
@@ -433,13 +432,13 @@ wait_for_admin
 
 install_patch
 
-shutdown_wls_service
-
-start_wls_service
-
 wait_for_admin
 
-performRollingRestartForManagedServers
+#shutdown_wls_service
 
-restart_coherence_server
+#start_wls_service
+
+#performRollingRestartForManagedServers
+
+#restart_coherence_server
 
