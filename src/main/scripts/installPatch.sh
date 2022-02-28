@@ -404,6 +404,14 @@ function restart_coherence_server()
    shutdown_coherence_server
 }
 
+function kill_servers()
+{
+    echo "Killing all the WebLogic server processes running on the VM"
+    ps -ef| grep java | grep weblogic | grep Dweblogic.Name | awk '{ print $2; }' | xargs kill -9
+    echo "killed all the WebLogic server processes running on the VM"
+}
+
+
 
 #main
 
@@ -422,23 +430,23 @@ IS_CLUSTER_DOMAIN="${IS_CLUSTER_DOMAIN,,}"
 
 validate_input
 
-setup_patch
 
-copy_patch
-
-check_opatch
-
-wait_for_admin
-
-install_patch
-
-wait_for_admin
-
-#shutdown_wls_service
-
-#start_wls_service
-
-#performRollingRestartForManagedServers
-
-#restart_coherence_server
-
+if [ "$SERVER_VM_NAME" == "adminVM" ];
+then
+    wait_for_admin
+    shutdown_wls_service
+    setup_patch
+    copy_patch
+    check_opatch
+    install_patch
+    start_wls_service
+    wait_for_admin
+else
+    shutdown_wls_service
+    kill_servers
+    setup_patch
+    copy_patch
+    check_opatch
+    install_patch
+    start_wls_service
+fi
