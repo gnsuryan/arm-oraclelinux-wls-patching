@@ -165,88 +165,6 @@ function install_patch()
 
 }
 
-function start_coherence_server()
-{
-  if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
-  then
-     return
-  else
-     echo "Starting weblogic coherence server on VM $SERVER_VM_NAME"
-     systemctl start wls_nodemanager.service
-     systemctl status wls_nodemanager.service
-     create_server_start_py_script
-     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/shutdown-server.py"
-
-     if [ "$?" == "0" ];
-     then
-       echo "Coherence Server $SERVER_NAME successfully shutdown"
-     else
-       echo "Coherence Server $SERVER_NAME shutdown failed !!"
-       exit 1
-     fi
-  fi
-}
-
-function shutdown_coherence_server()
-{
-  if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
-  then
-     return
-  else
-     echo "Shutting down weblogic coherence server on VM $SERVER_VM_NAME"
-     systemctl stop wls_nodemanager.service
-     systemctl status wls_nodemanager.service
-     create_server_shutdown_py_script
-     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/shutdown-server.py"
-
-     if [ "$?" == "0" ];
-     then
-       echo "Coherence Server $SERVER_NAME successfully shutdown"
-     else
-       echo "Coherence Server $SERVER_NAME shutdown failed !!"
-       exit 1
-     fi
-  fi
-}
-
-function create_server_shutdown_py_script()
-{
-    echo "Creating server shutdown script for server $SERVER_NAME"
-    cat <<EOF >${DOMAIN_PATH}/shutdown-server.py
-connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
-domainRuntime()
-slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
-status = slrBean.getState()
-print 'current server status: '+status
-if status != 'SHUTDOWN':
-   shutdown('$SERVER_NAME','Server')
-else:
-   print 'Server $SERVER_NAME already shutdown'
-
-disconnect()
-EOF
-     sudo chown -R $username:$groupname ${DOMAIN_PATH}
-}
-
-function create_server_start_py_script()
-{
-    echo "Creating server start script for server $SERVER_NAME"
-    cat <<EOF >${DOMAIN_PATH}/start-server.py
-connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
-domainRuntime()
-slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
-status = slrBean.getState()
-print 'current server status: '+status
-if status != 'RUNNING':
-   start('$SERVER_NAME','Server')
-else:
-   print 'Server $SERVER_NAME already running'
-
-disconnect()
-EOF
-     sudo chown -R $username:$groupname ${DOMAIN_PATH}
-}
-
 function shutdown_wls_service()
 {
   echo "Shutdown weblogic server services on VM $SERVER_VM_NAME"
@@ -309,6 +227,117 @@ function wait_for_admin()
          break
       fi
     done
+}
+
+function create_shutdown_py_script()
+{
+    echo "Creating server shutdown script for all servers running on VM $SERVER_VM_NAME"
+    cat <<EOF >${DOMAIN_PATH}/machine-shutdown-server.py
+connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
+cd('/')
+current_m=''
+hostname='$SERVER_VM_NAME'
+machines = cmo.getMachines()
+for m in machines:
+    print str(m)
+    nm = m.getNodeManager()
+    if nm.getListenAddress() in hostname:
+        current_m=m
+
+print 'current_m: '+str(current_m)
+
+servers = cmo.getServers()
+for s in servers:
+    name = s.getName()
+    if name in 'admin' :
+       continue
+    ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
+    if ref != None:
+       print 'shutting down server: '+name
+       shutdown(name,'Server',ignoreSessions='true', force='true')
+       domainRuntime()
+       slrBean = cmo.lookupServerLifeCycleRuntime(name)
+       status = slrBean.getState()
+       print 'Server ='+name+', Status = '+status
+       if status == 'SHUTDOWN':
+          print 'Server '+name+' shutdown successfully'
+       else:
+          raise Exception('Failed to shutdown server '+name)
+
+disconnect()
+EOF
+     sudo chown -R $username:$groupname ${DOMAIN_PATH}
+}
+
+function create_start_py_script()
+{
+    echo "Creating server start script for all servers running on VM $SERVER_VM_NAME"
+    cat <<EOF >${DOMAIN_PATH}/machine-start-server.py
+connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
+cd('/')
+current_m=''
+hostname='$SERVER_VM_NAME'
+machines = cmo.getMachines()
+for m in machines:
+    nm = m.getNodeManager()
+    if nm.getListenAddress() in hostname:
+        current_m=m
+
+print 'current_m: '+str(current_m)
+
+servers = cmo.getServers()
+for s in servers:
+    name = s.getName()
+    if name in 'admin' :
+       continue
+    ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
+    if ref != None:
+       print 'starting server: '+name
+       start(name,'Server')
+       domainRuntime()
+       slrBean = cmo.lookupServerLifeCycleRuntime(name)
+       status = slrBean.getState()
+       print 'Server ='+name+', Status = '+status
+       if status == 'RUNNING':
+          print 'Server '+name+' Started successfully'
+       else:
+          raise Exception('Failed to start server '+name)
+
+disconnect()
+EOF
+     sudo chown -R $username:$groupname ${DOMAIN_PATH}
+}
+
+function shutdownAllServersOnVM()
+{
+     echo "Shutting down all servers running on VM $SERVER_VM_NAME"
+     create_shutdown_py_script
+     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-shutdown-server.py"
+
+     if [ "$?" == "0" ];
+     then
+       echo "All Servers on VM $SERVER_VM_NAME successfully shutdown"
+     else
+       echo "All Servers shutdown failed on VM $SERVER_VM_NAME !!"
+       exit 1
+     fi
+  fi
+}
+
+function startAllServersOnVM()
+{
+     echo "Starting all servers running on VM $SERVER_VM_NAME"
+     create_start_py_script
+     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-start-server.py"
+
+     if [ "$?" == "0" ];
+     then
+       echo "All Servers on VM $SERVER_VM_NAME successfully started"
+     else
+       echo "All Servers start failed on VM $SERVER_VM_NAME !!"
+       exit 1
+     fi
+  fi
 }
 
 function performRollingRestartForManagedServers()
@@ -400,21 +429,6 @@ EOF
     fi
 }
 
-function restart_coherence_server()
-{
-   start_coherence_server
-   shutdown_coherence_server
-}
-
-function kill_servers()
-{
-    echo "Killing all the WebLogic server processes running on the VM"
-    ps -ef| grep java | grep weblogic | grep Dweblogic.Name | awk '{ print $2; }' | xargs kill -9
-    echo "killed all the WebLogic server processes running on the VM"
-}
-
-
-
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -437,7 +451,6 @@ if [ "$SERVER_VM_NAME" == "adminVM" ];
 then
     wait_for_admin
     shutdown_wls_service
-    kill_servers
     setup_patch
     copy_patch
     check_opatch
@@ -446,10 +459,11 @@ then
     wait_for_admin
 else
     shutdown_wls_service
-    kill_servers
+    shutdownAllServersOnVM
     setup_patch
     copy_patch
     check_opatch
     install_patch
     start_wls_service
+    startAllServersOnVM
 fi
