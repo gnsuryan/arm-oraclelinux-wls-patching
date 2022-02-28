@@ -253,6 +253,8 @@ function shutdown_wls_service()
 
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
+     systemctl stop wls_nodemanager.service
+     systemctl status wls_nodemanager.service
      systemctl stop wls_admin.service
      systemctl status wls_admin.service
   else
@@ -435,6 +437,7 @@ if [ "$SERVER_VM_NAME" == "adminVM" ];
 then
     wait_for_admin
     shutdown_wls_service
+    kill_servers
     setup_patch
     copy_patch
     check_opatch
