@@ -321,7 +321,6 @@ function shutdownAllServersOnVM()
        echo "All Servers shutdown failed on VM $SERVER_VM_NAME !!"
        exit 1
      fi
-  fi
 }
 
 function startAllServersOnVM()
@@ -337,7 +336,6 @@ function startAllServersOnVM()
        echo "All Servers start failed on VM $SERVER_VM_NAME !!"
        exit 1
      fi
-  fi
 }
 
 function performRollingRestartForManagedServers()
