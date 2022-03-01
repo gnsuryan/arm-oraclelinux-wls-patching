@@ -286,6 +286,7 @@ for m in machines:
 
 print 'current_m: '+str(current_m)
 
+serverConfig()
 servers = cmo.getServers()
 for s in servers:
     name = s.getName()
@@ -293,6 +294,7 @@ for s in servers:
        continue
     statusFlag=False
     i=1
+    serverConfig()
     ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
     domainRuntime()
     if ref != None:
