@@ -242,12 +242,16 @@ for m in machines:
 
 print 'current_m: '+str(current_m)
 
+serverConfig()
 servers = cmo.getServers()
 for s in servers:
     name = s.getName()
+    print 'server : '+name
     if name in 'admin' :
        continue
+    serverConfig()
     ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
+    print str(ref)
     if ref != None:
        print 'shutting down server: '+name
        shutdown(name,'Server',ignoreSessions='true', force='true')
