@@ -243,26 +243,46 @@ for m in machines:
 print 'current_m: '+str(current_m)
 
 serverConfig()
+serversToShutdown=[]
 servers = cmo.getServers()
 for s in servers:
     name = s.getName()
     print 'server : '+name
     if name in 'admin' :
        continue
-    serverConfig()
     ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
     print str(ref)
     if ref != None:
-       print 'shutting down server: '+name
-       shutdown(name,'Server',ignoreSessions='true', force='true')
-       domainRuntime()
-       slrBean = cmo.lookupServerLifeCycleRuntime(name)
+       serversToShutdown.append(name)
+
+print 'ServerToShutdown List'
+for x in range(len(serversToShutdown)):
+    print serversToShutdown[x]
+
+domainRuntime()
+for servername in serversToShutdown:
+       try:
+           slrBean = cmo.lookupServerLifeCycleRuntime(servername)
+           status = slrBean.getState()
+           print 'Server ='+servername+', Status = '+status
+           if status == 'SHUTDOWN':
+              print 'Server '+servername+' already shutdown'
+              continue
+       except Exception,e:
+           print e
+           continue
+
+       Thread.sleep(2000)
+       print 'shutting down server: '+servername
+       shutdown(servername,'Server',ignoreSessions='true', force='true')
+       Thread.sleep(2000)
+       slrBean = cmo.lookupServerLifeCycleRuntime(servername)
        status = slrBean.getState()
-       print 'Server ='+name+', Status = '+status
+       print 'Server ='+servername+', Status = '+status
        if status == 'SHUTDOWN':
-          print 'Server '+name+' shutdown successfully'
+          print 'Server '+servername+' shutdown successfully'
        else:
-          raise Exception('Failed to shutdown server '+name)
+          raise Exception('Failed to shutdown server '+servername)
 
 disconnect()
 EOF
@@ -287,35 +307,40 @@ for m in machines:
 print 'current_m: '+str(current_m)
 
 serverConfig()
+serversForStatusCheck=[]
 servers = cmo.getServers()
 for s in servers:
     name = s.getName()
     if name in 'admin' :
        continue
-    statusFlag=False
+
     i=1
     serverConfig()
     ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
-    domainRuntime()
     if ref != None:
-        while i<=5 and statusFlag == False:
-            slrBean = cmo.lookupServerLifeCycleRuntime(name)
-            status = slrBean.getState()
-            print 'Server = '+name+', Status = '+status
-            if status == 'RUNNING':
-                print 'Server '+name+' Started successfully'
-                statusFlag=True
-                break
-            else:
-                statusFlag=False
-                Thread.sleep(60000)
+       serversForStatusCheck.append(name)
 
-            i+=1
 
-        if statusFlag != True and ref != None:
-            raise Exception('Server '+name+' not running despite waiting for 5 minutes')
+domainRuntime()
+for servername in serversForStatusCheck:
+    i=1
+    statusFlag=False
+    while i<=5 and statusFlag == False:
+        slrBean = cmo.lookupServerLifeCycleRuntime(servername)
+        status = slrBean.getState()
+        print 'Server = '+servername+', Status = '+status
+        if status == 'RUNNING':
+            statusFlag=True
+            break
+        else:
+            statusFlag=False
+            Thread.sleep(60000)
+        i+=1
+
+    if statusFlag != True:
+        raise Exception('Server '+servername+' not running despite waiting for 5 minutes')
     else:
-        print 'server '+name+' not running on this VM'
+        print 'Server '+servername+' running successfully'
 
 disconnect()
 EOF
