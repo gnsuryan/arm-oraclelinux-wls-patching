@@ -95,7 +95,7 @@ function setup_patch()
     cleanup_patch
 }
 
-function cleanup_patch()
+function cleanup()
 {
     echo "cleaning up..."
 
@@ -105,11 +105,7 @@ function cleanup_patch()
     fi
 
     rm -rf ${DOMAIN_PATH}/*.py
-
-
 }
-trap cleanup_patch EXIT
-
 
 function check_opatch()
 {
@@ -127,140 +123,42 @@ function check_opatch()
    fi
 }
 
-function getPatchNumber()
-{
-    PATCH_NUMBER=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch query --all ${PATCH_HOME_DIR}/${PATCH_FILE} |grep '<ONEOFF'|grep 'REF_ID'|cut -d'\"' -f2")
-    echo "PATCH_NUMBER: ${PATCH_NUMBER}"
-}
-
 function install_patch()
 {
     unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
     chown -R oracle:oracle ${PATCH_HOME_DIR}
+    rm -rf ${PATCH_HOME_DIR}/${PATCH_FILE}
 
     JAVA_HOME=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
 
     echo "JAVA_HOME: $JAVA_HOME"
 
-    PATCH_NUMBER=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch query --all ${PATCH_HOME_DIR}/${PATCH_FILE} |grep '<ONEOFF'|grep 'REF_ID'|cut -d'\"' -f2")
-
-    echo "PATCH_NUMBER: $PATCH_NUMBER"
-
-    patchApplyCommand="cd /u01/app/wls/install/oracle/middleware/oracle_home/OPatch && ./opatch apply -silent -jre ${JAVA_HOME}/jre  ${PATCH_HOME_DIR}/$PATCH_NUMBER"
-
-    echo "Applying Patch... using command: $patchApplyCommand"
-    ret=$(runCommandAsOracleUser "$patchApplyCommand")
-    echo "$ret"
+    cd ${PATCH_HOME_DIR}/*
     
+	patchListFile=`find . -name linux64_patchlist.txt`
+	if [[ "${patchListFile}" == *"linux64_patchlist.txt"* ]];
+	then
+		echo "Applying WebLogic Stack Patch Bundle"
+		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -silent -oh /u01/app/wls/install/oracle/middleware/oracle_home  -phBaseFile linux64_patchlist.txt"
+		echo $command
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/*/binary_patches ; ${command}")
+	else
+		echo "Applying regular WebLogic patch"
+		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch apply -silent"
+		echo $command
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
+	fi
+
     retVal=$(getReturnCode "$ret")
-
-   if [[ "$retVal" != "0" ]];
-   then
-     echo "opatch command failed. Please set WebLogic Classpath appropriately and try again"
-     exit 1
-   else
-     echo "opatch command verified successfully."
-   fi
-
-}
-
-function verify_patch()
-{
-    echo "Listing all Patches to see if it contains existing patch"
     
-    ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory -jdk ${JAVA_HOME}')"
-    echo "$ret"
-    retVal=$(echo "$ret"|grep "Patch  ${PATCH_NUMBER}")
-
-    if [ "$?" == "0" ];
+    if [[ "$retVal" != "0" ]];
     then
-      echo "PATCH INSTALL: SUCCESS"
+        echo "opatch command failed. Please set WebLogic Classpath appropriately and try again"
+        exit 1
     else
-      echo "PATCH INSTALL: FAILED"
-      exit 1
+        echo "opatch command applied successfully."
     fi
-}
 
-function start_coherence_server()
-{
-  if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
-  then
-     return
-  else
-     echo "Starting weblogic coherence server on VM $SERVER_VM_NAME"
-     systemctl start wls_nodemanager.service
-     systemctl status wls_nodemanager.service
-     create_server_start_py_script
-     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/shutdown-server.py"
-
-     if [ "$?" == "0" ];
-     then
-       echo "Coherence Server $SERVER_NAME successfully shutdown"
-     else
-       echo "Coherence Server $SERVER_NAME shutdown failed !!"
-       exit 1
-     fi
-  fi
-}
-
-function shutdown_coherence_server()
-{
-  if [ "$SERVER_VM_NAME" != *"StorageVM"* ];
-  then
-     return
-  else
-     echo "Shutting down weblogic coherence server on VM $SERVER_VM_NAME"
-     systemctl stop wls_nodemanager.service
-     systemctl status wls_nodemanager.service
-     create_server_shutdown_py_script
-     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/shutdown-server.py"
-
-     if [ "$?" == "0" ];
-     then
-       echo "Coherence Server $SERVER_NAME successfully shutdown"
-     else
-       echo "Coherence Server $SERVER_NAME shutdown failed !!"
-       exit 1
-     fi
-  fi
-}
-
-function create_server_shutdown_py_script()
-{
-    echo "Creating server shutdown script for server $SERVER_NAME"
-    cat <<EOF >${DOMAIN_PATH}/shutdown-server.py
-connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
-domainRuntime()
-slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
-status = slrBean.getState()
-print 'current server status: '+status
-if status != 'SHUTDOWN':
-   shutdown('$SERVER_NAME','Server')
-else:
-   print 'Server $SERVER_NAME already shutdown'
-
-disconnect()
-EOF
-     sudo chown -R $username:$groupname ${DOMAIN_PATH}
-}
-
-function create_server_start_py_script()
-{
-    echo "Creating server start script for server $SERVER_NAME"
-    cat <<EOF >${DOMAIN_PATH}/start-server.py
-connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
-domainRuntime()
-slrBean = cmo.lookupServerLifeCycleRuntime('$SERVER_NAME')
-status = slrBean.getState()
-print 'current server status: '+status
-if status != 'RUNNING':
-   start('$SERVER_NAME','Server')
-else:
-   print 'Server $SERVER_NAME already running'
-
-disconnect()
-EOF
-     sudo chown -R $username:$groupname ${DOMAIN_PATH}
 }
 
 function shutdown_wls_service()
@@ -269,6 +167,8 @@ function shutdown_wls_service()
 
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
+     systemctl stop wls_nodemanager.service
+     systemctl status wls_nodemanager.service
      systemctl stop wls_admin.service
      systemctl status wls_admin.service
   else
@@ -325,95 +225,157 @@ function wait_for_admin()
     done
 }
 
-function rollingRestart()
+function create_shutdown_py_script()
 {
+    echo "Creating server shutdown script for all servers running on VM $SERVER_VM_NAME"
+    cat <<EOF >${DOMAIN_PATH}/machine-shutdown-server.py
+connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
+cd('/')
+current_m=''
+hostname='$SERVER_VM_NAME'
+machines = cmo.getMachines()
+for m in machines:
+    print str(m)
+    nm = m.getNodeManager()
+    if nm.getListenAddress() in hostname:
+        current_m=m
 
-    if [ "$SERVER_VM_NAME" != "adminVM" ];
-    then
-       return
-    fi
+print 'current_m: '+str(current_m)
 
-    if [ "${IS_CLUSTER_DOMAIN}" != "true" ];
-    then
-       return
-    fi
+serverConfig()
+serversToShutdown=[]
+servers = cmo.getServers()
+for s in servers:
+    name = s.getName()
+    print 'server : '+name
+    if name in 'admin' :
+       continue
+    ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
+    print str(ref)
+    if ref != None:
+       serversToShutdown.append(name)
 
-    echo "Creating rolling restart script for Domain"
-    cat <<EOF >${DOMAIN_PATH}/rolling-restart.py
+print 'ServerToShutdown List'
+for x in range(len(serversToShutdown)):
+    print serversToShutdown[x]
 
-import sys, socket
-import os
-import time
-from java.util import Date
-from java.text import SimpleDateFormat
+domainRuntime()
+for servername in serversToShutdown:
+       try:
+           slrBean = cmo.lookupServerLifeCycleRuntime(servername)
+           status = slrBean.getState()
+           print 'Server ='+servername+', Status = '+status
+           if status == 'SHUTDOWN':
+              print 'Server '+servername+' already shutdown'
+              continue
+       except Exception,e:
+           print e
+           continue
 
-try:
-   connect('$WLS_USERNAME', '$WLS_PASSWORD', 't3://$WLS_ADMIN_URL')
-   progress = rollingRestart('${CLUSTER_NAME}')
-   lastProgressString = ""
+       Thread.sleep(2000)
+       print 'shutting down server: '+servername
+       shutdown(servername,'Server',ignoreSessions='true', force='true')
+       Thread.sleep(2000)
+       slrBean = cmo.lookupServerLifeCycleRuntime(servername)
+       status = slrBean.getState()
+       print 'Server ='+servername+', Status = '+status
+       if status == 'SHUTDOWN':
+          print 'Server '+servername+' shutdown successfully'
+       else:
+          raise Exception('Failed to shutdown server '+servername)
 
-   progressString=progress.getProgressString()
-   # for testing progressString="12 / 12"
-   steps=progressString.split('/')
-
-
-   while not (steps[0].strip() == steps[1].strip()):
-     if not (progressString == lastProgressString):
-       print "Completed step " + steps[0].strip() + " of " + steps[1].strip() + " total steps"
-       lastProgressString = progressString
-
-     java.lang.Thread.sleep(1000)
-
-     progressString=progress.getProgressString()
-     steps=progressString.split('/')
-     if(len(steps) == 1):
-       print steps[0]
-       break;
-
-   if(len(steps) == 2):
-     print "Completed step " + steps[0].strip() + " of " + steps[1].strip() + " total steps"
-
-   t = Date()
-   endTime=SimpleDateFormat("hh:mm:ss").format(t)
-
-   print ""
-   print "RolloutDirectory task finished at " + endTime
-   print ""
-   viewMBean(progress)
-
-   state = progress.getStatus()
-   error = progress.getError()
-   #TODO: better error handling with the progress.getError obj and msg
-   # not a string, can raise directly
-   stateString = '%s' % state
-   if stateString != 'SUCCESS':
-     #msg = 'State is %s and error is: %s' % (state,error)
-     msg = "State is: " + state
-     raise(msg)
-   elif error is not None:
-     msg = "Error not null for state: " + state
-     print msg
-     #raise("Error not null for state: %s and error is: %s" + (state,error))
-     raise(error)
-except Exception, e:
-  e.printStackTrace()
-  dumpStack()
-  raise("Rollout failed")
-
-exit()
+disconnect()
 EOF
-
-    sudo chown -R $username:$groupname $DOMAIN_PATH
-    echo "Performing rolling restart for Cluster $CLUSTER_NAME"
-    runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST $DOMAIN_PATH/rolling-restart.py"
-    if [[ $? != 0 ]]; then
-         echo "Error : Rolling Restart for Cluster $CLUSTER_NAME failed"
-         exit 1
-    else
-         echo "Rolling Restart completed for Cluster $CLUSTER_NAME"
-    fi
+     sudo chown -R $username:$groupname ${DOMAIN_PATH}
 }
 
+function create_server_status_py_script()
+{
+    echo "Creating server status check script for all servers configured on VM $SERVER_VM_NAME"
+    cat <<EOF >${DOMAIN_PATH}/machine-check-server-status.py
+
+connect('$WLS_USERNAME','$WLS_PASSWORD','t3://$WLS_ADMIN_URL')
+cd('/')
+current_m=''
+hostname='$SERVER_VM_NAME'
+machines = cmo.getMachines()
+for m in machines:
+    nm = m.getNodeManager()
+    if nm.getListenAddress() in hostname:
+        current_m=m
+
+print 'current_m: '+str(current_m)
+
+serverConfig()
+serversForStatusCheck=[]
+servers = cmo.getServers()
+for s in servers:
+    name = s.getName()
+    if name in 'admin' :
+       continue
+
+    i=1
+    serverConfig()
+    ref = getMBean('/Servers/'+name+'/Machine/'+current_m.getName())
+    if ref != None:
+       serversForStatusCheck.append(name)
+
+
+domainRuntime()
+for servername in serversForStatusCheck:
+    i=1
+    statusFlag=False
+    while i<=5 and statusFlag == False:
+        slrBean = cmo.lookupServerLifeCycleRuntime(servername)
+        status = slrBean.getState()
+        print 'Server = '+servername+', Status = '+status
+        if status == 'RUNNING':
+            statusFlag=True
+            break
+        else:
+            statusFlag=False
+            Thread.sleep(60000)
+        i+=1
+
+    if statusFlag != True:
+        raise Exception('Server '+servername+' not running despite waiting for 5 minutes')
+    else:
+        print 'Server '+servername+' running successfully'
+
+disconnect()
+EOF
+     sudo chown -R $username:$groupname ${DOMAIN_PATH}
+}
+
+function shutdownAllServersOnVM()
+{
+     echo "Shutting down all servers running on VM $SERVER_VM_NAME"
+     create_shutdown_py_script
+     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-shutdown-server.py"
+
+     if [ "$?" == "0" ];
+     then
+       echo "All Servers on VM $SERVER_VM_NAME successfully shutdown"
+     else
+       echo "All Servers shutdown failed on VM $SERVER_VM_NAME !!"
+       exit 1
+     fi
+}
+
+function CheckStatusOfServersOnVM()
+{
+     echo "Checking status of all servers configured on VM $SERVER_VM_NAME"
+     create_server_status_py_script
+     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-check-server-status.py"
+
+     if [ "$?" == "0" ];
+     then
+       echo "All Servers on VM $SERVER_VM_NAME are running"
+     else
+       echo "One or more Servers on VM $SERVER_VM_NAME are not running!!"
+       exit 1
+     fi
+}
 
 #main
 
@@ -432,29 +394,25 @@ IS_CLUSTER_DOMAIN="${IS_CLUSTER_DOMAIN,,}"
 
 validate_input
 
-setup_patch
+if [ "$SERVER_VM_NAME" == "adminVM" ];
+then
+    wait_for_admin
+    shutdown_wls_service
+    setup_patch
+    copy_patch
+    check_opatch
+    install_patch
+    start_wls_service
+    wait_for_admin
+else
+    shutdown_wls_service
+    shutdownAllServersOnVM
+    setup_patch
+    copy_patch
+    check_opatch
+    install_patch
+    start_wls_service
+    CheckStatusOfServersOnVM
+fi
 
-copy_patch
-
-getPatchNumber
-
-check_opatch
-
-wait_for_admin
-
-install_patch
-
-verify_patch
-
-shutdown_wls_service
-
-start_wls_service
-
-wait_for_admin
-
-rollingRestart
-
-shutdown_coherence_server
-
-start_coherence_server
-
+cleanup
