@@ -64,6 +64,16 @@ function getReturnCode()
   echo "$retCode"
 }
 
+function setup_patch()
+{
+    echo "Creating directory required for applying patch"
+    mkdir -p ${PATCH_HOME_DIR}
+
+    cleanup_patch
+    copy_patch
+    extract_patch
+}
+
 function copy_patch()
 {
 
@@ -79,12 +89,11 @@ function copy_patch()
     cp ${WLS_PATCH_FILE_SHARE_MOUNT}/${PATCH_FILE} ${PATCH_HOME_DIR}/${PATCH_FILE}
 }
 
-function setup_patch()
+function extract_patch()
 {
-    echo "Creating directory required for applying patch"
-    mkdir -p ${PATCH_HOME_DIR}
-
-    cleanup_patch
+    unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
+    chown -R oracle:oracle ${PATCH_HOME_DIR}
+    rm -rf ${PATCH_HOME_DIR}/${PATCH_FILE}
 }
 
 function cleanup()
@@ -99,29 +108,9 @@ function cleanup()
     rm -rf ${DOMAIN_PATH}/*.py
 }
 
-function check_opatch()
-{
-   ret="$(runCommandAsOracleUser '. /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; /u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory  > /dev/null 2>&1')"
-   echo "$ret"
-
-   retVal=$(getReturnCode "$ret")
-
-   if [[ "$retVal" != "0" ]];
-   then
-     echo "opatch command failed. Please set WebLogic Classpath appropriately and try again"
-     exit 1
-   else
-     echo "opatch command verified successfully."
-   fi
-}
-
 function install_patch()
 {
-    unzip -qq -d ${PATCH_HOME_DIR} ${PATCH_HOME_DIR}/${PATCH_FILE}
-    chown -R oracle:oracle ${PATCH_HOME_DIR}
-    rm -rf ${PATCH_HOME_DIR}/${PATCH_FILE}
-
-    JAVA_HOME=$(runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
+    JAVA_HOME=$(runuser -l oracle -c ". ${ORACLE_HOME}/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
 
     echo "JAVA_HOME: $JAVA_HOME"
 
@@ -151,6 +140,38 @@ function install_patch()
         echo "opatch command applied successfully."
     fi
 
+}
+
+function updateOPatch()
+{
+	cd ${PATCH_HOME_DIR}
+	echo "Opatch version before updating patch"
+	runuser -l $username -c "$ORACLE_HOME/OPatch/opatch version"
+    cd ${PATCH_HOME_DIR}/*
+    OPATCH_ZIP=`find . -name '*.zip' | grep opatch`
+
+    if [ -z "$OPATCH_ZIP" ];
+        echo "OPatch zip not found for upgrading"
+        return
+    fi
+
+    unzip $OPATCH_ZIP
+
+    opatchFileName=`find . -name opatch_generic.jar | xargs readlink -f`
+    echo "Opatch File Name: $opatchFileName"
+	command="java -jar ${opatchFileName} -silent oracle_home=$ORACLE_HOME"
+	sudo chown -R $username:$groupname ${PATCH_HOME_DIR}
+	echo "Executing opatch update command:"${command}
+	runuser -l $username -c "cd ${ORACLE_HOME}/wlserver/server/bin ; . ./setWLSEnv.sh ;cd ${PATCH_HOME_DIR}; ${command}"
+	if [ "$?" != "0" ];
+       echo "Error : Updating opatch failed"
+       exit 1
+    else
+       echo "Successfully updated Opatch"
+    fi
+
+	echo "Opatch version after updating patch"
+	runuser -l $username -c "$ORACLE_HOME/OPatch/opatch version"
 }
 
 function shutdown_wls_service()
@@ -343,7 +364,7 @@ function shutdownAllServersOnVM()
 {
      echo "Shutting down all servers running on VM $SERVER_VM_NAME"
      create_shutdown_py_script
-     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-shutdown-server.py"
+     runuser -l oracle -c ". ${ORACLE_HOME}/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-shutdown-server.py"
 
      if [ "$?" == "0" ];
      then
@@ -358,7 +379,7 @@ function checkStatusOfServersOnVM()
 {
      echo "Checking status of all servers configured on VM $SERVER_VM_NAME"
      create_server_status_py_script
-     runuser -l oracle -c ". /u01/app/wls/install/oracle/middleware/oracle_home/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-check-server-status.py"
+     runuser -l oracle -c ". ${ORACLE_HOME}/wlserver/server/bin/setWLSEnv.sh; java weblogic.WLST ${DOMAIN_PATH}/machine-check-server-status.py"
 
      if [ "$?" == "0" ];
      then
@@ -373,6 +394,7 @@ function checkStatusOfServersOnVM()
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_HOME_DIR="/u01/app/wls/patches"
+ORACLE_HOME="/u01/app/wls/install/oracle/middleware/oracle_home"
 WLS_FILE_SHARE="/mnt/wlsshare"
 WLS_PATCH_FILE_SHARE_MOUNT="${WLS_FILE_SHARE}/patches"
 DOMAIN_PATH="/u01/domains"
@@ -388,8 +410,7 @@ then
     wait_for_admin
     shutdown_wls_service
     setup_patch
-    copy_patch
-    check_opatch
+    updateOPatch
     install_patch
     start_wls_service
     wait_for_admin
@@ -397,8 +418,7 @@ else
     shutdown_wls_service
     shutdownAllServersOnVM
     setup_patch
-    copy_patch
-    check_opatch
+    updateOPatch
     install_patch
     start_wls_service
     checkStatusOfServersOnVM
