@@ -44,7 +44,7 @@
         },
         "isClusterDomain": {
             "type": "bool",
-            "defaultvalue" : false,
+            "defaultvalue" : true,
             "metadata" : {
                 "description": "boolean value indicating if the existing domain is a cluster/dynamic cluster domain or not. If domain has only Admin Server, pass the value as false. For Cluster and Dynamic Cluster Domains, pass the value as true."
             }
@@ -72,7 +72,7 @@
         },        
         "location": {
             "type": "string",
-            "default":"[resourceGroup().location]",
+            "defaultValue":"[resourceGroup().location]",
             "metadata": {
                 "description": "Location for all resources."
             }
@@ -81,6 +81,13 @@
             "type": "string",
             "metadata": {
                 "description": "Name of the WebLogic Patch File which is already uploaded in to the Storage Account"
+            }
+        },
+        "listOfVMsToPatch":{
+            "type": "string",
+            "defaultValue": "all",
+            "metadata": {
+                "description": "Comma separated list of VMs to be patched. Defaults to all which will patch all the WebLogic server VMs in the resource group"
             }
         },
         "wls_patch_timestamp": {
@@ -102,7 +109,7 @@
             "name": "[concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "condition": "[parameters('isClusterDomain')]",
+            "condition": "[ and(parameters('isClusterDomain'), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1))))) ]",
             "copy": {
                 "name": "CoherenceVMExtensionLoop",
                 "mode": "serial",
@@ -130,7 +137,7 @@
             "name": "[concat(parameters('managedServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "condition": "[parameters('isClusterDomain')]",
+            "condition": "[and(parameters('isClusterDomain'), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),'VM',copyindex(1)))))]",
             "copy": {
                 "name": "ManagedVMExtensionLoop",
                 "mode": "serial",
@@ -159,6 +166,7 @@
             "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
+            "condition": "[or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), parameters('adminVMName')))]",
             "dependsOn": [ "CoherenceVMExtensionLoop", "ManagedVMExtensionLoop"],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",

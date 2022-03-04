@@ -1,36 +1,42 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
-		"_artifactsLocation": {
-			"value": "GEN-UNIQUE"
-		},
-        "adminVMName" : {
-            "value" : "GEN-UNIQUE"
-        },
-        "wlsAdminURL": {
-            "value" : "GEN-UNIQUE"
-        },
-        "wlsUserName": {
-            "value" : "GEN-UNIQUE"
-        },
-        "wlsPassword": {
-            "value" : "GEN-UNIQUE"
-        },
-        "isClusterDomain": {
-            "value" : false
-        },
-        "managedServerPrefix": {
-            "value" : "GEN-UNIQUE"
-        },
-        "numberOfmanagedServerVMs": {
-            "value": 0,
-        },
-        "location": {
-            "value": "GEN-UNIQUE"
-        },
-		"wls_patch_file": {
-			"value": "GEN-UNIQUE"
-		}
-	}
+   "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{
+      "_artifactsLocation":{
+         "value": "GEN-UNIQUE"
+      },
+      "adminVMName":{
+         "value": "GEN-UNIQUE"
+      },
+      "wlsAdminURL":{
+         "value": "GEN-UNIQUE"
+      },
+      "wlsUserName":{
+         "value": "GEN-UNIQUE"
+      },
+      "wlsPassword":{
+         "value": "GEN-UNIQUE"
+      },
+      "isClusterDomain":{
+         "value": true
+      },
+      "managedServerPrefix":{
+         "value": "GEN-UNIQUE"
+      },
+      "numberOfmanagedServerVMs":{
+         "value": 3
+      },
+      "numberOfCoherenceServerVMs": {
+         "value": 1
+      },
+      "location":{
+         "value": "GEN-UNIQUE"
+      },
+      "wls_patch_file":{
+         "value": "GEN-UNIQUE"
+      },
+      "listOfVMsToPatch":{
+         "value": "GEN-UNIQUE"
+      }
+   }
 }

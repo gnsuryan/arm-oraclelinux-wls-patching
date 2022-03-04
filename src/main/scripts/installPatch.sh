@@ -23,13 +23,6 @@ function validate_input()
         exit 1
     fi
 
-    if [ -z "${SERVER_NAME}" ];
-    then
-        echo "Server Name not provided."
-        usage
-        exit 1
-    fi
-
     if [ -z "${WLS_USERNAME}" ];
     then
         echo "WLS Username not provided."
@@ -275,7 +268,7 @@ for servername in serversToShutdown:
        Thread.sleep(2000)
        print 'shutting down server: '+servername
        shutdown(servername,'Server',ignoreSessions='true', force='true')
-       Thread.sleep(2000)
+       Thread.sleep(10000)
        slrBean = cmo.lookupServerLifeCycleRuntime(servername)
        status = slrBean.getState()
        print 'Server ='+servername+', Status = '+status
@@ -362,7 +355,7 @@ function shutdownAllServersOnVM()
      fi
 }
 
-function CheckStatusOfServersOnVM()
+function checkStatusOfServersOnVM()
 {
      echo "Checking status of all servers configured on VM $SERVER_VM_NAME"
      create_server_status_py_script
@@ -388,7 +381,7 @@ username="oracle"
 groupname="oracle"
 CLUSTER_NAME="cluster1"
 
-read PATCH_FILE IS_CLUSTER_DOMAIN SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
+read PATCH_FILE IS_CLUSTER_DOMAIN SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
 IS_CLUSTER_DOMAIN="${IS_CLUSTER_DOMAIN,,}"
 
@@ -412,7 +405,7 @@ else
     check_opatch
     install_patch
     start_wls_service
-    CheckStatusOfServersOnVM
+    checkStatusOfServersOnVM
 fi
 
 cleanup
