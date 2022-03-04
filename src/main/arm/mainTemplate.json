@@ -42,13 +42,6 @@
                 "description": "WebLogic Server Admin Console URL"
             }
         },
-        "isClusterDomain": {
-            "type": "bool",
-            "defaultvalue" : false,
-            "metadata" : {
-                "description": "boolean value indicating if the existing domain is a cluster/dynamic cluster domain or not. If domain has only Admin Server, pass the value as false. For Cluster and Dynamic Cluster Domains, pass the value as true."
-            }
-        },
         "managedServerPrefix": {
             "type": "string",
             "defaultValue": "msp",
@@ -72,7 +65,7 @@
         },        
         "location": {
             "type": "string",
-            "default":"[resourceGroup().location]",
+            "defaultValue":"[resourceGroup().location]",
             "metadata": {
                 "description": "Location for all resources."
             }
@@ -81,6 +74,13 @@
             "type": "string",
             "metadata": {
                 "description": "Name of the WebLogic Patch File which is already uploaded in to the Storage Account"
+            }
+        },
+        "listOfVMsToPatch":{
+            "type": "string",
+            "defaultValue": "all",
+            "metadata": {
+                "description": "Comma separated list of VMs to be patched. Defaults to all which will patch all the WebLogic server VMs in the resource group"
             }
         },
         "wls_patch_timestamp": {
@@ -93,7 +93,6 @@
     },
     "variables": {
         "name_scriptFile": "installPatch.sh",
-        "name_adminServer": "adminVM",
         "name_coherenceServerPrefix": "Storage"
     },
     "resources": [
@@ -102,7 +101,7 @@
             "name": "[concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "condition": "[parameters('isClusterDomain')]",
+            "condition": "[ and(greater(parameters('numberOfCoherenceServerVMs'),0), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1))))) ]",
             "copy": {
                 "name": "CoherenceVMExtensionLoop",
                 "mode": "serial",
@@ -121,7 +120,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         },
@@ -130,7 +129,7 @@
             "name": "[concat(parameters('managedServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "condition": "[parameters('isClusterDomain')]",
+            "condition": "[and(greater(parameters('numberOfmanagedServerVMs'),0), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),'VM',copyindex(1)))))]",
             "copy": {
                 "name": "ManagedVMExtensionLoop",
                 "mode": "serial",
@@ -150,7 +149,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         },
@@ -159,6 +158,7 @@
             "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
+            "condition": "[or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), parameters('adminVMName')))]",
             "dependsOn": [ "CoherenceVMExtensionLoop", "ManagedVMExtensionLoop"],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -173,7 +173,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',parameters('adminVMName'),' ',variables('name_adminServer'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('adminVMName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         }
