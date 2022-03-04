@@ -164,10 +164,10 @@ function updateOPatch()
 	sudo chown -R $username:$groupname ${PATCH_HOME_DIR}
 	echo "Executing opatch update command:"${command}
 	runuser -l $username -c "cd ${ORACLE_HOME}/wlserver/server/bin ; . ./setWLSEnv.sh ;cd ${PATCH_HOME_DIR}; ${command}"
-	if [ "$?" != "0" ];
+
+    if [ "$?" != "0" ];
     then
-       echo "Error : Updating opatch failed"
-       exit 1
+       echo "Warning : Updating opatch failed. Either OPatch is already updated or oPatch updated failed."
     else
        echo "Successfully updated Opatch"
     fi
