@@ -17,9 +17,6 @@
       "wlsPassword":{
          "value": "GEN-UNIQUE"
       },
-      "isClusterDomain":{
-         "value": true
-      },
       "managedServerPrefix":{
          "value": "GEN-UNIQUE"
       },

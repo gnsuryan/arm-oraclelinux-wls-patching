@@ -2,13 +2,6 @@
 
 function validate_input()
 {
-    if [ -z "${IS_CLUSTER_DOMAIN}" ];
-    then
-        echo "IS_CLUSTER_DOMAIN Flag not provided"
-        usage
-        exit 1
-    fi
-    
     if [ -z "${PATCH_FILE}" ];
     then
         echo "Patch File not provided."
@@ -379,11 +372,8 @@ WLS_PATCH_FILE_SHARE_MOUNT="${WLS_FILE_SHARE}/patches"
 DOMAIN_PATH="/u01/domains"
 username="oracle"
 groupname="oracle"
-CLUSTER_NAME="cluster1"
 
-read PATCH_FILE IS_CLUSTER_DOMAIN SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
-
-IS_CLUSTER_DOMAIN="${IS_CLUSTER_DOMAIN,,}"
+read PATCH_FILE SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
 validate_input
 

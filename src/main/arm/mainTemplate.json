@@ -42,13 +42,6 @@
                 "description": "WebLogic Server Admin Console URL"
             }
         },
-        "isClusterDomain": {
-            "type": "bool",
-            "defaultvalue" : true,
-            "metadata" : {
-                "description": "boolean value indicating if the existing domain is a cluster/dynamic cluster domain or not. If domain has only Admin Server, pass the value as false. For Cluster and Dynamic Cluster Domains, pass the value as true."
-            }
-        },
         "managedServerPrefix": {
             "type": "string",
             "defaultValue": "msp",
@@ -100,7 +93,6 @@
     },
     "variables": {
         "name_scriptFile": "installPatch.sh",
-        "name_adminServer": "adminVM",
         "name_coherenceServerPrefix": "Storage"
     },
     "resources": [
@@ -128,7 +120,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         },
@@ -157,7 +149,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',concat(parameters('managedServerPrefix'),copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         },
@@ -181,7 +173,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isClusterDomain'),' ',parameters('adminVMName'),' ',variables('name_adminServer'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('adminVMName'),parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         }
