@@ -173,7 +173,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('adminVMName'),parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('adminVMName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         }

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+function usage()
+{
+   echo "./installPatch.sh <<< <PATCH_FILE> <SERVER_VM_NAME> <WLS_USERNAME> <WLS_PASSWORD> <WLS_ADMIN_URL>"
+}
+
+
 function validate_input()
 {
     if [ -z "${PATCH_FILE}" ];
