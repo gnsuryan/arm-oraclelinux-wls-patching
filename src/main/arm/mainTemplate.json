@@ -101,7 +101,7 @@
             "name": "[concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "condition": "[ and(parameters('isClusterDomain'), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1))))) ]",
+            "condition": "[ and(greater(parameters('numberOfCoherenceServerVMs'),0), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1))))) ]",
             "copy": {
                 "name": "CoherenceVMExtensionLoop",
                 "mode": "serial",
@@ -129,7 +129,7 @@
             "name": "[concat(parameters('managedServerPrefix'),'VM',copyindex(1),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "condition": "[and(parameters('isClusterDomain'), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),'VM',copyindex(1)))))]",
+            "condition": "[and(greater(parameters('numberOfmanagedServerVMs'),0), or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), concat(parameters('managedServerPrefix'),'VM',copyindex(1)))))]",
             "copy": {
                 "name": "ManagedVMExtensionLoop",
                 "mode": "serial",
