@@ -69,7 +69,7 @@ function setup_patch()
     echo "Creating directory required for applying patch"
     mkdir -p ${PATCH_HOME_DIR}
 
-    cleanup_patch
+    cleanup
     copy_patch
     extract_patch
 }
