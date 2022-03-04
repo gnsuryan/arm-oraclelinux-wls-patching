@@ -151,6 +151,7 @@ function updateOPatch()
     OPATCH_ZIP=`find . -name '*.zip' | grep opatch`
 
     if [ -z "$OPATCH_ZIP" ];
+    then
         echo "OPatch zip not found for upgrading"
         return
     fi
@@ -164,6 +165,7 @@ function updateOPatch()
 	echo "Executing opatch update command:"${command}
 	runuser -l $username -c "cd ${ORACLE_HOME}/wlserver/server/bin ; . ./setWLSEnv.sh ;cd ${PATCH_HOME_DIR}; ${command}"
 	if [ "$?" != "0" ];
+    then
        echo "Error : Updating opatch failed"
        exit 1
     else
