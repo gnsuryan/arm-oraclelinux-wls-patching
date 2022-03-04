@@ -1,14 +1,13 @@
 #!/bin/bash
 
+function usage()
+{
+   echo "./installPatch.sh <<< <PATCH_FILE> <SERVER_VM_NAME> <WLS_USERNAME> <WLS_PASSWORD> <WLS_ADMIN_URL>"
+}
+
+
 function validate_input()
 {
-    if [ -z "${IS_CLUSTER_DOMAIN}" ];
-    then
-        echo "IS_CLUSTER_DOMAIN Flag not provided"
-        usage
-        exit 1
-    fi
-    
     if [ -z "${PATCH_FILE}" ];
     then
         echo "Patch File not provided."
@@ -19,13 +18,6 @@ function validate_input()
     if [ -z "${SERVER_VM_NAME}" ];
     then
         echo "Server VM Name not provided."
-        usage
-        exit 1
-    fi
-
-    if [ -z "${SERVER_NAME}" ];
-    then
-        echo "Server Name not provided."
         usage
         exit 1
     fi
@@ -275,7 +267,7 @@ for servername in serversToShutdown:
        Thread.sleep(2000)
        print 'shutting down server: '+servername
        shutdown(servername,'Server',ignoreSessions='true', force='true')
-       Thread.sleep(2000)
+       Thread.sleep(10000)
        slrBean = cmo.lookupServerLifeCycleRuntime(servername)
        status = slrBean.getState()
        print 'Server ='+servername+', Status = '+status
@@ -362,7 +354,7 @@ function shutdownAllServersOnVM()
      fi
 }
 
-function CheckStatusOfServersOnVM()
+function checkStatusOfServersOnVM()
 {
      echo "Checking status of all servers configured on VM $SERVER_VM_NAME"
      create_server_status_py_script
@@ -386,11 +378,8 @@ WLS_PATCH_FILE_SHARE_MOUNT="${WLS_FILE_SHARE}/patches"
 DOMAIN_PATH="/u01/domains"
 username="oracle"
 groupname="oracle"
-CLUSTER_NAME="cluster1"
 
-read PATCH_FILE IS_CLUSTER_DOMAIN SERVER_VM_NAME SERVER_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
-
-IS_CLUSTER_DOMAIN="${IS_CLUSTER_DOMAIN,,}"
+read PATCH_FILE SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
 validate_input
 
@@ -412,7 +401,7 @@ else
     check_opatch
     install_patch
     start_wls_service
-    CheckStatusOfServersOnVM
+    checkStatusOfServersOnVM
 fi
 
 cleanup
