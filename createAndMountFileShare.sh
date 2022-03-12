@@ -57,7 +57,7 @@ function get_param()
         case "$1" in    
               -h |?|--help )        usage ;;
        -storageAccountName )        STORAGE_ACCOUNT_NAME=$2 ;;
-       -storageAccountKey     STORAGE_ACCOUNT_KEY    Storage Account Key
+       -storageAccountKey  )        STORAGE_ACCOUNT_KEY=$2;;
        -fileShareName      )        FILE_SHARE_NAME=$2 ;;
                           *)        echo 'invalid arguments specified'
                                     usage;;
