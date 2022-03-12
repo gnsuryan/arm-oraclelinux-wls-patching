@@ -56,7 +56,7 @@ function get_storage_account_key()
   STORAGE_ACCOUNT_KEY=$(az storage account keys list --resource-group "${RESOURCE_GROUP_NAME}" --account-name "$STORAGE_ACCOUNT_NAME" --query '[0].value' | tr -d '"')
 }
 
-function check_fileshare_exists_on_storage_account()
+function check_and_create_file_share()
 {
     az storage share list --account-key "${STORAGE_ACCOUNT_KEY}" --account-name "${STORAGE_ACCOUNT_NAME}" --query '[].name' | grep "${AZURE_WLS_FILE_SHARE}"
 
@@ -115,8 +115,7 @@ function createAndMountFileShare()
 
     if [ "$result" == "true" ];
     then
-       echo "WLS Azure File Share created: ${AZURE_WLS_FILE_SHARE}"
-        az vm run-command invoke -g ${RESOURCE_GROUP_NAME} -n adminVM --command-id RunShellScript --scripts "wget https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/master/src/main/scripts/createAndMountFileShare.sh; chmod +x createAndMountFileShare.sh; ./createAndMountFileShare.sh -storageAccountName ${STORAGE_ACCOUNT_NAME} -storageAccountKey ${STORAGE_ACCOUNT_KEY} -fileShareName ${AZURE_WLS_FILE_SHARE}"
+        echo "WLS Azure File Share created: ${AZURE_WLS_FILE_SHARE}"
     else
         echo "Failed to create WLS Azure File Share: ${AZURE_WLS_FILE_SHARE}"
         exit 1
@@ -138,7 +137,7 @@ get_storage_account
 
 get_storage_account_key
 
-check_fileshare_exists_on_storage_account
+check_and_create_file_share
 
 upload_file_to_fileshare
 

@@ -2,15 +2,23 @@
 
 function usage()
 {
-   echo "./installPatch.sh <<< <PATCH_FILE> <SERVER_VM_NAME> <WLS_USERNAME> <WLS_PASSWORD> <WLS_ADMIN_URL>"
+   echo "./installPatch.sh <<< <PATCH_FILE> <IS_SINGLE_NODE_OFFER> <SERVER_VM_NAME> <WLS_USERNAME> <WLS_PASSWORD> <WLS_ADMIN_URL>"
 }
 
 
 function validate_input()
 {
+
     if [ -z "${PATCH_FILE}" ];
     then
         echo "Patch File not provided."
+        usage
+        exit 1
+    fi
+
+    if [ -z "${IS_SINGLE_NODE_OFFER}" ];
+    then
+        echo "IS_SINGLE_NODE_OFFER not provided."
         usage
         exit 1
     fi
@@ -403,27 +411,36 @@ DOMAIN_PATH="/u01/domains"
 username="oracle"
 groupname="oracle"
 
-read PATCH_FILE SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
+read PATCH_FILE IS_SINGLE_NODE_OFFER SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
+
+IS_SINGLE_NODE_OFFER=${IS_SINGLE_NODE_OFFER,,}
 
 validate_input
 
-if [ "$SERVER_VM_NAME" == "adminVM" ];
+if [ "$IS_SINGLE_NODE_OFFER" == "true" ];
 then
-    wait_for_admin
-    shutdown_wls_service
     setup_patch
     updateOPatch
     install_patch
-    start_wls_service
-    wait_for_admin
 else
-    shutdown_wls_service
-    shutdownAllServersOnVM
-    setup_patch
-    updateOPatch
-    install_patch
-    start_wls_service
-    checkStatusOfServersOnVM
+    if [ "$SERVER_VM_NAME" == "adminVM" ];
+    then
+        wait_for_admin
+        shutdown_wls_service
+        setup_patch
+        updateOPatch
+        install_patch
+        start_wls_service
+        wait_for_admin
+    else
+        shutdown_wls_service
+        shutdownAllServersOnVM
+        setup_patch
+        updateOPatch
+        install_patch
+        start_wls_service
+        checkStatusOfServersOnVM
+    fi
 fi
 
 cleanup
