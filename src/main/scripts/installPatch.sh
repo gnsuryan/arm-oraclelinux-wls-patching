@@ -23,6 +23,11 @@ function validate_input()
         exit 1
     fi
 
+    if [ "${IS_SINGLE_NODE_OFFER}" == "true" ];
+    then
+        return
+    fi
+
     if [ -z "${SERVER_VM_NAME}" ];
     then
         echo "Server VM Name not provided."
