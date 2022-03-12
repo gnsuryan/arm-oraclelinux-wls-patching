@@ -116,6 +116,17 @@ function createAndMountFileShare()
     if [ "$result" == "true" ];
     then
         echo "WLS Azure File Share created: ${AZURE_WLS_FILE_SHARE}"
+
+        if [ "$(az vm list -d -o table --query "[?name=='adminVM']")" = "" ];
+        then
+            echo "VM with name admin VM was found. "
+            VM_NAME="adminVM"
+        else
+            echo "VM with name admin VM not found. This should be a Single node offer"
+            VM_NAME="WebLogicServerVM"
+        fi
+
+        az vm run-command invoke -g ${RESOURCE_GROUP_NAME} -n $VM_NAME --command-id RunShellScript --scripts "wget https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/temp/createAndMountFileShare.sh; chmod +x createAndMountFileShare.sh; ./createAndMountFileShare.sh -storageAccountName ${STORAGE_ACCOUNT_NAME} -storageAccountKey ${STORAGE_ACCOUNT_KEY} -fileShareName ${AZURE_WLS_FILE_SHARE}"
     else
         echo "Failed to create WLS Azure File Share: ${AZURE_WLS_FILE_SHARE}"
         exit 1
