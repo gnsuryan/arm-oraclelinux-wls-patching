@@ -126,7 +126,7 @@ function createAndMountFileShare()
             VM_NAME="WebLogicServerVM"
         fi
 
-        az vm run-command invoke -g ${RESOURCE_GROUP_NAME} -n $VM_NAME --command-id RunShellScript --scripts "wget https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/temp/createAndMountFileShare.sh; chmod +x createAndMountFileShare.sh; ./createAndMountFileShare.sh -storageAccountName ${STORAGE_ACCOUNT_NAME} -storageAccountKey ${STORAGE_ACCOUNT_KEY} -fileShareName ${AZURE_WLS_FILE_SHARE}"
+        az vm run-command invoke -g ${RESOURCE_GROUP_NAME} -n $VM_NAME --command-id RunShellScript --scripts "wget https://raw.githubusercontent.com/gnsuryan/arm-oraclelinux-wls-patching/temp/createAndMountFileShare.sh && chmod +x createAndMountFileShare.sh && ./createAndMountFileShare.sh -storageAccountName ${STORAGE_ACCOUNT_NAME} -storageAccountKey ${STORAGE_ACCOUNT_KEY} -fileShareName ${AZURE_WLS_FILE_SHARE}"
     else
         echo "Failed to create WLS Azure File Share: ${AZURE_WLS_FILE_SHARE}"
         exit 1
