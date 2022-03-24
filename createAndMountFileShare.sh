@@ -41,8 +41,8 @@ function usage()
 {
 cat << USAGE >&2
 Usage:
-    -resourceGroupName     RESOURCE_GROUP_NAME    Resource Group Name
     -storageAccountName    STORAGE_ACCOUNT_NAME   Account Storage Name
+    -storageAccountKey     STORAGE_ACCOUNT_KEY    Storage Account Key
     -fileShareName         FILE_SHARE_NAME            File Share Name
     -h|?|--help            HELP                   Help/Usage info
 USAGE
@@ -56,8 +56,8 @@ function get_param()
     do
         case "$1" in    
               -h |?|--help )        usage ;;
-       -resourceGroupName  )        RESOURCE_GROUP_NAME=$2 ;;
        -storageAccountName )        STORAGE_ACCOUNT_NAME=$2 ;;
+       -storageAccountKey  )        STORAGE_ACCOUNT_KEY=$2;;
        -fileShareName      )        FILE_SHARE_NAME=$2 ;;
                           *)        echo 'invalid arguments specified'
                                     usage;;
@@ -74,15 +74,15 @@ function validate_input()
         usage
     fi
 
-    if [ -z "$RESOURCE_GROUP_NAME" ];
-    then
-        echo "Resource Group Name not specified."
-        usage
-    fi
-
     if [ -z "$STORAGE_ACCOUNT_NAME" ];
     then
         echo "Storage Account Name not specified."
+        usage
+    fi
+
+    if [ -z "$STORAGE_ACCOUNT_KEY" ];
+    then
+        echo "Storage Account Key not specified."
         usage
     fi
 
@@ -99,8 +99,6 @@ function validate_input()
 get_param "$@"
 
 validate_input "$@"
-
-STORAGE_ACCOUNT_KEY=$(az storage account keys list -g $RESOURCE_GROUP_NAME -n $STORAGE_ACCOUNT_NAME --query [0].value -o tsv)
 
 FILE_SHARE_MOUNT="/mnt/$FILE_SHARE_NAME"
 
