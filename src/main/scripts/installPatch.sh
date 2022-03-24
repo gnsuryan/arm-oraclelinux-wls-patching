@@ -157,9 +157,14 @@ function install_patch()
 
 function updateOPatch()
 {
-	cd ${PATCH_HOME_DIR}
-	echo "Opatch version before updating patch"
-	runuser -l $username -c "$ORACLE_HOME/OPatch/opatch version"
+    cd ${PATCH_HOME_DIR}
+    echo "Opatch version before updating patch"
+    runuser -l $username -c "$ORACLE_HOME/OPatch/opatch version"
+    
+    CURRENT_OPATCH_VERSION_RESULT=$(runuser -l $username -c "$ORACLE_HOME/OPatch/opatch version")
+    CURRENT_OPATCH_VERSION=$(echo $CURRENT_OPATCH_VERSION_RESULT | cut -d' ' -f 3)    
+    echo "CURRENT OPATCH VERSION: $CURRENT_OPATCH_VERSION"
+    
     cd ${PATCH_HOME_DIR}/*
     OPATCH_ZIP=`find . -name '*.zip' | grep opatch`
 
@@ -172,25 +177,36 @@ function updateOPatch()
     unzip $OPATCH_ZIP
 
     opatchFileName=`find . -name opatch_generic.jar | xargs readlink -f`
-    echo "Opatch File Name: $opatchFileName"
+    
+    opatchFileDir=`dirname $opatchFileName`
+    opatchFileVersionTxt="$opatchFileDir/version.txt"
+    
+    OPATCH_VERSION_IN_ZIP=$(cat $opatchFileVersionTxt)
+    echo "OPATCH VERSION IN ZIP FILE: $OPATCH_VERSION_IN_ZIP"
+    
+    if [ "$OPATCH_VERSION_IN_ZIP" == "$CURRENT_OPATCH_VERSION" ];
+    then
+       echo "Opatch is already updated to version $OPATCH_VERSION_IN_ZIP"
+    else
+        echo "Opatch File Name: $opatchFileName"
 	command="java -jar ${opatchFileName} -silent oracle_home=$ORACLE_HOME"
 	sudo chown -R $username:$groupname ${PATCH_HOME_DIR}
 	echo "Executing opatch update command:"${command}
 	runuser -l $username -c "cd ${ORACLE_HOME}/wlserver/server/bin ; . ./setWLSEnv.sh ;cd ${PATCH_HOME_DIR}; ${command}"
-
-    result="$?"
-    
-    echo "opatch update result: ${result}"
-    
-    if [ "$result" != "0" ];
-    then
-       echo "Warning : Updating opatch failed. Either OPatch is already updated or oPatch updated failed."
-    else
-       echo "Successfully updated Opatch"
-    fi
-
+        result="$?"
+        echo "opatch update result: ${result}"
+	if [ "$result" != "0" ];
+        then
+            echo "Warning : Updating opatch failed. oPatch updated failed."
+	    exit 1
+        else
+            echo "Successfully updated Opatch"
+        fi
+	
 	echo "Opatch version after updating patch"
-	runuser -l $username -c "$ORACLE_HOME/OPatch/opatch version"
+        runuser -l $username -c "$ORACLE_HOME/OPatch/opatch version"
+    fi   
+        
 }
 
 function shutdown_wls_service()
