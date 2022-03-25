@@ -458,6 +458,7 @@ else
         start_wls_service
         wait_for_admin
     else
+        wait_for_admin
         shutdown_wls_service
         shutdownAllServersOnVM
         setup_patch
@@ -465,6 +466,7 @@ else
         install_patch
         start_wls_service
         checkStatusOfServersOnVM
+        wait_for_admin
     fi
 fi
 
