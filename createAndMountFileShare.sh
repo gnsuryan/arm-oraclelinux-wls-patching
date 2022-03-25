@@ -22,7 +22,7 @@ function createAndMountFileShare()
   echo "chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred"
   sudo chmod 600 /etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred
 
-  #Using smb2.1 as it is supported by earlier version of linux
+  #Using smb2.1 as it is supported by old versions of oracle linux
   
   echo "//${STORAGE_ACCOUNT_NAME}.file.core.windows.net/${FILE_SHARE_NAME} ${FILE_SHARE_MOUNT} cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino"
   sudo bash -c "echo \"//${STORAGE_ACCOUNT_NAME}.file.core.windows.net/${FILE_SHARE_NAME} ${FILE_SHARE_MOUNT} cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${STORAGE_ACCOUNT_NAME}.cred ,dir_mode=0777,file_mode=0777,serverino\" >> /etc/fstab"
