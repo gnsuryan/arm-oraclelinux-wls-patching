@@ -1,0 +1,220 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": 
+    {
+        "config": 
+        {
+            "isWizard": false,
+            "basics": 
+            {
+                "subscription": 
+                {
+                    "constraints": {
+                        "validations": [
+                            {
+                                "permission": "Microsoft.Compute/virtualmachines/write",
+                                "message": "Must have write permission for the virtual machine."
+                            },
+                            {
+                                "permission": "Microsoft.Compute/virtualMachines/extensions/write",
+                                "message": "Must have write permission for the extension."
+                            }
+                        ]
+                    },
+                    "resourceProviders": [
+                        "Microsoft.Compute"
+                    ]
+                },
+                "resourceGroup": 
+                {
+                    "constraints": 
+                    {
+                        "validations": 
+                        [
+                            {
+                                "isValid": "[contains(resourceGroup().mode, 'Existing')]",
+                                "message": "Please use existing resource group"
+                            }
+                        ]
+                    },
+                    "allowExisting" : true
+                },
+                "location": {
+                    "visible": false
+                }
+            }
+        },
+        "basics": 
+        [ 
+            {
+                "name": "offerType",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Offer Type",
+                "placeholder": "",
+                "defaultValue": "Oracle WebLogic Server Single Node",
+                "toolTip": "",
+                "multiselect": false,
+                "selectAll": false,
+                "defaultDescription": "A value for selection",
+                "constraints": {
+                    "allowedValues": [
+                        {
+                            "label": "Oracle WebLogic Server Single Node",
+                            "description": "Oracle WebLogic Server Single Node Offer",
+                            "value": "singlenode"
+                        },
+                        {
+                            "label": "Oracle WebLogic Server with Admin Server",
+                            "description": "Oracle WebLogic Server with Admin Server Offer",
+                            "value": "adminonly"
+                        },
+                        {
+                            "label": "Oracle WebLogic Server Cluster",
+                            "description": "Oracle WebLogic Server Cluster Offer",
+                            "value": "cluster"
+                        },
+                        {
+                            "label": "Oracle WebLogic Server Dynamic Cluster",
+                            "description": "Oracle WebLogic Server Dynamic Cluster Offer",
+                            "value": "dynamiccluster"
+                        }
+                    ],
+                    "required": true
+                },
+                "visible": true
+            },
+            {
+              "name": "patchZipFile",
+              "type": "Microsoft.Common.FileUpload",
+              "label": "WebLogic Patch Zip File",
+              "toolTip": "",
+              "constraints": {
+                "required": true,
+                "accept": ".zip,application/zip"
+              },
+              "options": {
+                "multiple": false,
+                "uploadMode": "url",
+                "openMode": "text",
+                "encoding": "UTF-8"
+              },
+              "visible": true
+            },
+            {
+                "name": "wlsUserName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Username for WebLogic Administrator",
+                "defaultValue": "weblogic",
+                "toolTip": "Use only letters and numbers",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-z0-9A-Z]{1,30}$",
+                    "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
+                },
+                "visible": "[not(equals(basics('offerType'),'singlenode'))]"
+            },
+            {
+                "name": "wlsPassword",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                    "password": "Password for WebLogic Administrator",
+                    "confirmPassword": "Confirm password"
+                },
+                "toolTip": "Password for WebLogic Administrator",
+                "constraints": {
+                    "required": true,
+                    "regex": "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)[A-Za-z\\d]{12,}$",
+                    "validationMessage": "The password must contain at least 12 characters, with at least 1 uppercase letter, 1 lowercase letter and 1 number, and special characters are not allowed."
+                },
+                "options": {
+                    "hideConfirmation": false
+                },
+                "visible": "[not(equals(basics('offerType'),'singlenode'))]"
+            },
+            {
+                "name": "managedServerPrefix",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Managed Server Prefix",
+                "defaultValue": "msp",
+                "toolTip": "Use only letters and numbers",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[a-zA-Z]{1,30}$",
+                    "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
+                },
+                "visible": "[or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster'))]"
+            },
+            {
+                "name": "numberOfManagedServers",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Number of Managed Server VMs",
+                "defaultValue": "3",
+                "toolTip": "Use only letters and numbers",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[1-9]$",
+                    "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
+                },
+                "visible": "[or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster'))]"
+            },
+            {
+                "name": "numberOfCoherenceServerVMs",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Number of Coherence cache server VMs",
+                "defaultValue": "1",
+                "toolTip": "Use only letters and numbers",
+                "constraints": {
+                    "required": true,
+                    "regex": "^[1-9]$",
+                    "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
+                },
+                "visible": "[or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster'))]"
+            },
+            {
+                "name": "editpatchConfig",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "Apply patch to all the VMs?",
+                "defaultValue": "Yes",
+                "toolTip": "Select 'No' to edit patch configuration.",
+                "constraints": {
+                    "allowedValues": [
+                        {
+                            "label": "Yes",
+                            "value": "false"
+                        },
+                        {
+                            "label": "No",
+                            "value": "true"
+                        }
+                    ],
+                    "required": true
+                },
+				"visible": "[or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster'))]"
+            },
+            {
+                "name": "listOfVMsToPatch",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Comma Separated List of VMs to Patch",
+                "defaultValue": "",
+                "toolTip": "Use only letters and numbers",
+                "visible": "[and(or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster')),bool(basics('editpatchConfig')))]"
+            }
+        ],
+        "steps": [ ],
+        "outputs": 
+        {
+            "resourceGroup": "[resourceGroup()]",
+            "location": "[resourceGroup().location]",
+            "wls_patch_file_uri": "[steps('basics').patchZipFile]",
+			"wlsUserName":"[steps('basics').wlsUserName]",
+			"wlsPassword":"[steps('basics').wlsPassword]",
+			"isSingleNodeOffer":"[equals(basics('offerType'),'singlenode')]",
+			"managedServerPrefix":"[steps('basics').managedServerPrefix]",
+			"numberOfmanagedServerVMs":"[if(or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster')), steps('basics').numberOfManagedServers,'0')]",
+			"numberOfCoherenceServerVMs":"[if(or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster')), steps('basics').numberOfCoherenceServerVMs,'0')]",
+            "listOfVMsToPatch":"[if(bool(steps('basics').editpatchConfig), steps('basics').listOfVMsToPatch,'all')]"
+        }
+    }
+}

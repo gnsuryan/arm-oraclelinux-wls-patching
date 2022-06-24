@@ -16,11 +16,11 @@
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
             }
         },
-        "isSingleNodeOffer" : {
+        "offerType" : {
              "type": "bool",
-             "defaultValue": false,
+             "defaultValue": "singlenode",
              "metadata": {
-                "description": "Boolean value indicating if the offer deployed in the resource group is a Single node offer or not"
+                "description": "Value indicates the offer deployed in the resource group. one of the following - Single Node, Admin, Cluster or Dynamic Cluster"
             } 
         },
         "adminVMName": {
@@ -39,12 +39,14 @@
         },
         "wlsPassword": {
             "type": "securestring",
+            "defaultValue": "na"
             "metadata": {
                 "description": "Password for your Weblogic domain name"
             }
         },
         "wlsAdminURL": {
             "type": "string",
+            "defaultValue": "t3://adminVM:7005",
             "metadata": {
                 "description": "WebLogic Server Admin Console URL"
             }
@@ -77,10 +79,10 @@
                 "description": "Location for all resources."
             }
         },
-        "wls_patch_file": {
-            "type": "string",
+        "wls_patch_file_uri": {
+            "type": "securestring",
             "metadata": {
-                "description": "Name of the WebLogic Patch File which is already uploaded in to the Storage Account"
+                "description": "SAS URI of the WebLogic Patch File which is already uploaded in to the Storage Account"
             }
         },
         "listOfVMsToPatch":{
@@ -127,7 +129,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isSingleNodeOffer'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file_uri'),' ',parameters('offerType'),' ',concat(parameters('managedServerPrefix'),variables('name_coherenceServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         },
@@ -156,7 +158,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isSingleNodeOffer'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file_uri'),' ',parameters('offerType'),' ',concat(parameters('managedServerPrefix'),'VM',copyindex(1)),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         },
@@ -165,7 +167,7 @@
             "name": "[concat(parameters('adminVMName'),'/newuserscript')]",
             "apiVersion": "2020-06-01",
             "location": "[parameters('location')]",
-            "condition": "[or(parameters('isSingleNodeOffer'),or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), parameters('adminVMName'))))]",
+            "condition": "[or(equals(parameters('offerType'),'singlenode'),or(equals(parameters('listOfVMsToPatch'),'all'),contains(parameters('listOfVMsToPatch'), parameters('adminVMName'))))]",
             "dependsOn": [ "CoherenceVMExtensionLoop", "ManagedVMExtensionLoop"],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -180,7 +182,7 @@
                       ]
                 },
                 "protectedSettings": {
-                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file'),' ',parameters('isSingleNodeOffer'),' ',parameters('adminVMName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
+                      "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' <<< \"',parameters('wls_patch_file_uri'),' ',parameters('offerType'),' ',parameters('adminVMName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('wlsAdminURL'),'\"')]"
                 }
             }
         }

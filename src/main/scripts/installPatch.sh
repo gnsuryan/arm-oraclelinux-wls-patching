@@ -2,30 +2,25 @@
 
 function usage()
 {
-   echo "./installPatch.sh <<< <PATCH_FILE> <IS_SINGLE_NODE_OFFER> <SERVER_VM_NAME> <WLS_USERNAME> <WLS_PASSWORD> <WLS_ADMIN_URL>"
+   echo "./installPatch.sh <<< <PATCH_FILE_SAS_URI> <IS_SINGLE_NODE_OFFER> <SERVER_VM_NAME> <WLS_USERNAME> <WLS_PASSWORD> <WLS_ADMIN_URL>"
 }
 
 
 function validate_input()
 {
 
-    if [ -z "${PATCH_FILE}" ];
+    if [ -z "${PATCH_FILE_SAS_URI}" ];
     then
-        echo "Patch File not provided."
+        echo "Patch File SAS URI not provided."
         usage
         exit 1
     fi
 
-    if [ -z "${IS_SINGLE_NODE_OFFER}" ];
+    if [ -z "${OFFER_TYPE}" ];
     then
-        echo "IS_SINGLE_NODE_OFFER not provided."
+        echo "OFFER_TYPE not provided."
         usage
         exit 1
-    fi
-
-    if [ "${IS_SINGLE_NODE_OFFER}" == "true" ];
-    then
-        return
     fi
 
     if [ -z "${SERVER_VM_NAME}" ];
@@ -83,23 +78,37 @@ function setup_patch()
     mkdir -p ${PATCH_HOME_DIR}
 
     cleanup
-    copy_patch
+    download_patch
     extract_patch
 }
 
-function copy_patch()
+function download_patch()
 {
+    echo "downloading patch file from SAS URI to patch home directory..."
 
-    ls -l ${WLS_PATCH_FILE_SHARE_MOUNT}
+    cd ${PATCH_HOME_DIR}
+    PATCH_FILE=$(echo "${PATCH_FILE_SAS_URI##*/}" | cut -d? -f1)
+    wget "${PATCH_FILE}" -k -o ${PATCH_HOME_DIR}/${PATCH_FILE}
 
-    if [[ ! -f ${WLS_PATCH_FILE_SHARE_MOUNT}/${PATCH_FILE} ]];
+    if [ ! -f ${PATCH_HOME_DIR}/${PATCH_FILE} ];
     then
-        echo "Patch file ${PATCH_FILE} not available on file share mount: ${WLS_PATCH_FILE_SHARE_MOUNT}"
-        exit 1
+      echo "Error in downloading patch file ${PATCH_FILE} from SAS URI !!"
+      exit 1
+    else
+      echo "Successfully downloaded patch file ${PATCH_FILE} from SAS URI !!"
     fi
 
-    echo "copying patch from file share to patch home directory..."
-    cp ${WLS_PATCH_FILE_SHARE_MOUNT}/${PATCH_FILE} ${PATCH_HOME_DIR}/${PATCH_FILE}
+    unzip -qq -t ${PATCH_HOME_DIR}/${PATCH_FILE}
+    result=$?
+
+    if [ $result == 0 ];
+    then
+      echo "WebLogic patch file is a valid archive(zip) file"
+    else
+      echo "Weblogic patch file is not a valid archive(zip) file"
+      exit 1
+    fi
+
 }
 
 function extract_patch()
@@ -436,13 +445,13 @@ DOMAIN_PATH="/u01/domains"
 username="oracle"
 groupname="oracle"
 
-read PATCH_FILE IS_SINGLE_NODE_OFFER SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
+read PATCH_FILE_SAS_URI OFFER_TYPE SERVER_VM_NAME WLS_USERNAME WLS_PASSWORD WLS_ADMIN_URL
 
-IS_SINGLE_NODE_OFFER=${IS_SINGLE_NODE_OFFER,,}
+OFFER_TYPE=${OFFER_TYPE,,}
 
 validate_input
 
-if [ "$IS_SINGLE_NODE_OFFER" == "true" ];
+if [ "${OFFER_TYPE}" == "singlenode" ];
 then
     setup_patch
     updateOPatch
