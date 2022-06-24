@@ -88,7 +88,7 @@ function download_patch()
 
     cd ${PATCH_HOME_DIR}
     PATCH_FILE=$(echo "${PATCH_FILE_SAS_URI##*/}" | cut -d? -f1)
-    wget "${PATCH_FILE}" -k -o ${PATCH_HOME_DIR}/${PATCH_FILE}
+    curl -o "${PATCH_FILE}" "${PATCH_FILE_SAS_URI}"
 
     if [ ! -f ${PATCH_HOME_DIR}/${PATCH_FILE} ];
     then
@@ -224,10 +224,16 @@ function shutdown_wls_service()
 
   if [ "$SERVER_VM_NAME" == "adminVM" ];
   then
-     systemctl stop wls_nodemanager.service
-     systemctl status wls_nodemanager.service
-     systemctl stop wls_admin.service
-     systemctl status wls_admin.service
+     if [ "$offerType" == "adminonly" ];
+     then
+         systemctl stop wls_admin.service
+         systemctl status wls_admin.service
+     else
+         systemctl stop wls_nodemanager.service
+         systemctl status wls_nodemanager.service
+         systemctl stop wls_admin.service
+         systemctl status wls_admin.service
+     fi
   else
      systemctl stop wls_nodemanager.service
      systemctl status wls_nodemanager.service

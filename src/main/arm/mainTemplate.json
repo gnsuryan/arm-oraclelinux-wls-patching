@@ -17,7 +17,7 @@
             }
         },
         "offerType" : {
-             "type": "bool",
+             "type": "string",
              "defaultValue": "singlenode",
              "metadata": {
                 "description": "Value indicates the offer deployed in the resource group. one of the following - Single Node, Admin, Cluster or Dynamic Cluster"
@@ -46,7 +46,7 @@
         },
         "wlsAdminURL": {
             "type": "string",
-            "defaultValue": "t3://adminVM:7005",
+            "defaultValue": "adminVM:7005",
             "metadata": {
                 "description": "WebLogic Server Admin Console URL"
             }
@@ -80,7 +80,7 @@
             }
         },
         "wls_patch_file_uri": {
-            "type": "securestring",
+            "type": "string",
             "metadata": {
                 "description": "SAS URI of the WebLogic Patch File which is already uploaded in to the Storage Account"
             }

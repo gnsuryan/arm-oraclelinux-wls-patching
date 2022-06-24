@@ -210,7 +210,7 @@
             "wls_patch_file_uri": "[steps('basics').patchZipFile]",
 			"wlsUserName":"[steps('basics').wlsUserName]",
 			"wlsPassword":"[steps('basics').wlsPassword]",
-			"isSingleNodeOffer":"[equals(basics('offerType'),'singlenode')]",
+			"offerType":"[equals(basics('offerType'),'singlenode')]",
 			"managedServerPrefix":"[steps('basics').managedServerPrefix]",
 			"numberOfmanagedServerVMs":"[if(or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster')), steps('basics').numberOfManagedServers,'0')]",
 			"numberOfCoherenceServerVMs":"[if(or(equals(basics('offerType'),'cluster'),equals(basics('offerType'),'dynamiccluster')), steps('basics').numberOfCoherenceServerVMs,'0')]",
