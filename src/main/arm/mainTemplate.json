@@ -39,7 +39,7 @@
         },
         "wlsPassword": {
             "type": "securestring",
-            "defaultValue": "na"
+            "defaultValue": "na",
             "metadata": {
                 "description": "Password for your Weblogic domain name"
             }
