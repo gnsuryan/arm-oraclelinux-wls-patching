@@ -121,6 +121,41 @@ function cleanup()
     rm -rf ${DOMAIN_PATH}/*.py
 }
 
+function simulate_opatch()
+{
+    JAVA_HOME=$(runuser -l oracle -c ". ${ORACLE_HOME}/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
+
+    echo "JAVA_HOME: $JAVA_HOME"
+
+    cd ${PATCH_HOME_DIR}/*
+
+	patchListFile=`find . -name linux64_patchlist.txt`
+	if [[ "${patchListFile}" == *"linux64_patchlist.txt"* ]];
+	then
+		echo "Applying WebLogic Stack Patch Bundle"
+		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch napply -report -silent -oh /u01/app/wls/install/oracle/middleware/oracle_home  -phBaseFile linux64_patchlist.txt"
+		echo $command
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/*/binary_patches ; ${command}")
+	else
+		echo "Applying regular WebLogic patch"
+		command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch apply -report -silent"
+		echo $command
+		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
+	fi
+
+    retVal=$(getReturnCode "$ret")
+
+    if [[ "$retVal" != "0" ]];
+    then
+        echo "opatch command failed. Please set WebLogic Classpath appropriately and try again"
+        exit 1
+    else
+        echo "opatch command applied successfully."
+    fi
+
+}
+
+
 function install_patch()
 {
     JAVA_HOME=$(runuser -l oracle -c ". ${ORACLE_HOME}/wlserver/server/bin/setWLSEnv.sh > /dev/null 2>&1 && echo \$JAVA_HOME")
@@ -454,6 +489,7 @@ else
         shutdown_wls_service
         setup_patch
         updateOPatch
+        simulate_opatch
         install_patch
         start_wls_service
         wait_for_admin
@@ -463,6 +499,7 @@ else
         shutdownAllServersOnVM
         setup_patch
         updateOPatch
+        simulate_opatch
         install_patch
         start_wls_service
         checkStatusOfServersOnVM
