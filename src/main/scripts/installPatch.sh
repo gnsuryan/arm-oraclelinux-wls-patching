@@ -127,6 +127,7 @@ function opatch_lsinventory()
    command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory"
    echo $command
    ret=$(runCommandAsOracleUser "${command}")
+   echo "$ret"
 }
 
 function simulate_opatch()
@@ -150,6 +151,8 @@ function simulate_opatch()
 		echo $command
 		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
 	fi
+
+    echo "$ret"
 
     retVal=$(getReturnCode "$ret")
 
@@ -185,6 +188,8 @@ function install_patch()
 		echo $command
 		ret=$(runCommandAsOracleUser "cd ${PATCH_HOME_DIR}/* ; ${command}")
 	fi
+
+    echo "$ret"
 
     retVal=$(getReturnCode "$ret")
     
