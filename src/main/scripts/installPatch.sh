@@ -62,12 +62,12 @@ function runCommandAsOracleUser()
    cmd="$1"
    echo "Exec command $cmd"
 
-   runuser -l oracle -c "$cmd" &
+   runuser -l oracle -c "$cmd" > /tmp/patch.log &
    myPid=$!
    wait $myPid
    status="$?"
+   cat /tmp/patch.log
    echo -e "\nRETVAL=$status"
-
 }
 
 function getReturnCode()
@@ -119,6 +119,14 @@ function cleanup()
     fi
 
     rm -rf ${DOMAIN_PATH}/*.py
+}
+
+function opatch_lsinventory()
+{
+   echo "Executing Opatch lsinventory"
+   command="/u01/app/wls/install/oracle/middleware/oracle_home/OPatch/opatch lsinventory"
+   echo $command
+   ret=$(runCommandAsOracleUser "${command}")
 }
 
 function simulate_opatch()
@@ -485,15 +493,18 @@ then
 else
     if [ "$SERVER_VM_NAME" == "adminVM" ];
     then
+        opatch_lsinventory
         wait_for_admin
         shutdown_wls_service
         setup_patch
         updateOPatch
         simulate_opatch
         install_patch
+        opatch_lsinventory
         start_wls_service
         wait_for_admin
     else
+        opatch_lsinventory
         wait_for_admin
         shutdown_wls_service
         shutdownAllServersOnVM
@@ -501,6 +512,7 @@ else
         updateOPatch
         simulate_opatch
         install_patch
+        opatch_lsinventory
         start_wls_service
         checkStatusOfServersOnVM
         wait_for_admin
