@@ -473,6 +473,23 @@ function checkStatusOfServersOnVM()
      fi
 }
 
+function restartAllServices()
+{
+   cleanup
+
+   if [ "$IS_SINGLE_NODE_OFFER" != "true" ] && [ "$SERVER_VM_NAME" == "adminVM" ];
+   then
+        start_wls_service
+        wait_for_admin
+   else
+        start_wls_service
+        checkStatusOfServersOnVM
+        wait_for_admin
+   fi
+}
+
+trap restartAllServices EXIT
+
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -492,6 +509,8 @@ validate_input
 
 if [ "$IS_SINGLE_NODE_OFFER" == "true" ];
 then
+    opatch_lsinventory
+    simulate_opatch
     setup_patch
     updateOPatch
     install_patch
@@ -499,29 +518,23 @@ else
     if [ "$SERVER_VM_NAME" == "adminVM" ];
     then
         opatch_lsinventory
+        simulate_opatch
         wait_for_admin
         shutdown_wls_service
         setup_patch
         updateOPatch
-        simulate_opatch
         install_patch
         opatch_lsinventory
-        start_wls_service
-        wait_for_admin
     else
         opatch_lsinventory
+        simulate_opatch
         wait_for_admin
         shutdown_wls_service
         shutdownAllServersOnVM
         setup_patch
         updateOPatch
-        simulate_opatch
         install_patch
         opatch_lsinventory
-        start_wls_service
-        checkStatusOfServersOnVM
-        wait_for_admin
     fi
 fi
 
-cleanup
