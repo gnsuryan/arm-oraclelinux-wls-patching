@@ -62,11 +62,10 @@ function runCommandAsOracleUser()
    cmd="$1"
    echo "Exec command $cmd"
 
-   runuser -l oracle -c "$cmd" > /tmp/patch.log &
+   runuser -l oracle -c "$cmd" &
    myPid=$!
    wait $myPid
    status="$?"
-   cat /tmp/patch.log
    echo -e "\nRETVAL=$status"
 }
 
@@ -510,28 +509,28 @@ validate_input
 if [ "$IS_SINGLE_NODE_OFFER" == "true" ];
 then
     opatch_lsinventory
-    simulate_opatch
     setup_patch
+    simulate_opatch
     updateOPatch
     install_patch
 else
     if [ "$SERVER_VM_NAME" == "adminVM" ];
     then
         opatch_lsinventory
+        setup_patch
         simulate_opatch
         wait_for_admin
         shutdown_wls_service
-        setup_patch
         updateOPatch
         install_patch
         opatch_lsinventory
     else
         opatch_lsinventory
+        setup_patch
         simulate_opatch
         wait_for_admin
         shutdown_wls_service
         shutdownAllServersOnVM
-        setup_patch
         updateOPatch
         install_patch
         opatch_lsinventory
