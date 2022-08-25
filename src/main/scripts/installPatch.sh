@@ -487,8 +487,6 @@ function restartAllServices()
    fi
 }
 
-trap restartAllServices EXIT
-
 #main
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
