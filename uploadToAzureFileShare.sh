@@ -49,6 +49,14 @@ function validate_input()
 function get_storage_account()
 {
   STORAGE_ACCOUNT_NAME=$(az storage account list --resource-group "${RESOURCE_GROUP_NAME}" --query '[0].name' | tr -d '"')
+
+  if [ -z "$STORAGE_ACCOUNT_NAME" ];
+  then
+    TEMP_STR="$(az storage account list | grep ${RESOURCE_GROUP_NAME})"
+    STORAGE_ACCOUNT_NAME=$(echo $TEMP_STR|cut -d',' -f1|cut -d':' -f2|grep "Microsoft.Storage/storageAccounts"|cut -d'/' -f9|tr -d '"')
+  fi
+
+  echo "STORAGE_ACCOUNT_NAME: $STORAGE_ACCOUNT_NAME"
 }
 
 function get_storage_account_key()
